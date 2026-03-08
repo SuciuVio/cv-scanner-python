@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>CV Scanner — Powered by Claude AI</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0a0a0f;--surface:#0f0f1a;--border:#16162a;
+      --accent:#00e5a0;--blue:#4d9fff;--purple:#c084fc;
+      --yellow:#f0c040;--red:#ff6b6b;--text:#e2e2f0;--muted:#666680;
+    }
+    body{background:var(--bg);color:var(--text);font-family:'Courier New',monospace;min-height:100vh;font-size:13px}
+    .grid-bg{position:fixed;inset:0;pointer-events:none;z-index:0;
+      background-image:linear-gradient(rgba(0,229,160,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.025) 1px,transparent 1px);
+      background-size:60px 60px}
+    .wrap{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:24px 16px}
+
+    /* ── Header ── */
+    .hdr{margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px}
+    .logo{border-left:3px solid var(--accent);padding-left:16px}
+    .logo-tag{font-size:9px;letter-spacing:5px;color:var(--accent);text-transform:uppercase;margin-bottom:4px}
+    .logo h1{font-size:clamp(24px,5vw,36px);font-weight:900;letter-spacing:-1px;color:#fff;font-family:Georgia,serif}
+    .logo h1 span{color:var(--accent)}
+    .logo p{margin-top:4px;color:var(--muted);font-size:10px;letter-spacing:1px}
+    .score-badge{width:68px;height:68px;border-radius:50%;border:3px solid var(--accent);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      background:rgba(0,229,160,.07);display:none}
+    .score-badge .sn{font-size:24px;font-weight:900;color:var(--accent);line-height:1;font-family:Georgia,serif}
+    .score-badge .ss{font-size:8px;color:var(--accent);letter-spacing:1px}
+
+    /* ── Mode Tabs ── */
+    .mode-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:0}
+    .mode-tab{padding:9px 14px;background:transparent;color:var(--muted);border:none;
+      border-bottom:2px solid transparent;cursor:pointer;font-size:11px;font-weight:700;
+      letter-spacing:.5px;font-family:inherit;transition:all .2s;margin-bottom:-1px;white-space:nowrap}
+    .mode-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .mode-tab:hover{color:var(--text)}
+
+    /* ── Panels ── */
+    .panel{display:none}.panel.active{display:block}
+
+    /* ── Two-col layout ── */
+    .two-col{display:grid;grid-template-columns:360px 1fr;gap:20px}
+    @media(max-width:800px){.two-col{grid-template-columns:1fr}}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:600px){.grid-2{grid-template-columns:1fr}}
+
+    /* ── Upload Zone ── */
+    .upload-zone{border:2px dashed var(--border);border-radius:6px;padding:20px 14px;
+      text-align:center;cursor:pointer;margin-bottom:12px;background:var(--surface);transition:all .2s}
+    .upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(0,229,160,.04)}
+    .upload-zone .icon{font-size:28px;margin-bottom:6px}
+    .upload-zone .lbl{color:#ccc;font-size:12px;font-weight:700}
+    .upload-zone .sub{color:var(--muted);font-size:10px;margin-top:4px}
+
+    /* ── Inputs ── */
+    textarea,input[type=text]{width:100%;background:var(--surface);border:1px solid var(--border);
+      border-radius:4px;color:#b0b0c0;font-size:11px;padding:10px 12px;font-family:inherit;
+      outline:none;transition:border-color .2s;resize:vertical}
+    textarea{line-height:1.7}
+    textarea:focus,input:focus{border-color:var(--accent)}
+    .h160{height:160px}.h120{height:120px}.h100{height:100px}.h80{height:80px}
+
+    /* ── Buttons ── */
+    .btn{width:100%;padding:12px;border:none;border-radius:4px;font-size:11px;font-weight:900;
+      letter-spacing:2px;text-transform:uppercase;font-family:inherit;cursor:pointer;transition:all .2s;margin-top:10px}
+    .btn-g{background:var(--accent);color:var(--bg)}
+    .btn-b{background:var(--blue);color:var(--bg)}
+    .btn-p{background:var(--purple);color:var(--bg)}
+    .btn-y{background:var(--yellow);color:#0a0a0f}
+    .btn-t{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);color:var(--accent)}
+    .btn:disabled{background:#111120!important;color:#333!important;cursor:not-allowed}
+    .btn:not(:disabled):hover{opacity:.88;transform:translateY(-1px)}
+    .btn-sm{padding:6px 14px;width:auto;margin-top:0;font-size:10px;border-radius:4px;
+      background:transparent;border:1px solid var(--border);color:#555;cursor:pointer;font-family:inherit;transition:all .2s}
+    .btn-sm:hover{border-color:var(--red);color:var(--red)}
+
+    /* ── Loading ── */
+    .loading{margin-top:10px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:4px;display:none}
+    .step{font-size:11px;color:var(--accent);margin-bottom:4px;animation:blink 1.4s infinite}
+    .step:nth-child(2){animation-delay:.3s}.step:nth-child(3){animation-delay:.6s}.step:nth-child(4){animation-delay:.9s}
+    @keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+
+    /* ── Error ── */
+    .err{margin-top:10px;padding:10px 12px;background:rgba(255,107,107,.08);border:1px solid var(--red);
+      border-radius:4px;font-size:11px;color:var(--red);line-height:1.5;display:none}
+
+    /* ── Cards ── */
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:10px}
+    .clabel{font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px}
+    .ca{color:var(--accent)}.cb{color:var(--blue)}.cp{color:var(--purple)}.cy{color:var(--yellow)}.cr{color:var(--red)}.cm{color:var(--muted)}
+
+    /* ── Result Tabs ── */
+    .rtabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+    .rtab{padding:7px 16px;background:transparent;color:var(--muted);border:none;
+      border-bottom:2px solid transparent;cursor:pointer;font-size:10px;font-weight:700;
+      letter-spacing:2px;text-transform:uppercase;font-family:inherit;transition:all .2s;margin-bottom:-1px}
+    .rtab.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .rpanel{display:none;animation:fadeIn .3s ease}.rpanel.active{display:block}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ── Score circle ── */
+    .sc-wrap{display:flex;gap:16px;align-items:center}
+    .sc-circle{width:76px;height:76px;border-radius:50%;border:3px solid var(--accent);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      background:rgba(0,229,160,.06);flex-shrink:0}
+    .sc-num{font-size:26px;font-weight:900;color:var(--accent);line-height:1;font-family:Georgia,serif}
+    .sc-sub{font-size:8px;color:var(--accent);letter-spacing:1px}
+    .sc-info .name{font-size:17px;font-weight:700;color:#fff;font-family:Georgia,serif;margin-bottom:2px}
+    .sc-info .title{font-size:11px;color:var(--accent);margin-bottom:6px}
+    .sc-info .contact{font-size:10px;color:#555;margin-bottom:6px}
+    .sc-info .summary{font-size:11px;color:#888;line-height:1.6}
+
+    /* ── Tags ── */
+    .tags{display:flex;flex-wrap:wrap;gap:5px}
+    .tag{padding:3px 10px;border-radius:20px;font-size:10px}
+    .tg{background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.18);color:var(--accent)}
+    .tb{background:rgba(77,159,255,.07);border:1px solid rgba(77,159,255,.18);color:var(--blue)}
+    .tp{background:rgba(192,132,252,.07);border:1px solid rgba(192,132,252,.18);color:var(--purple)}
+    .tr{background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.2);color:var(--red)}
+    .ty{background:rgba(240,192,64,.07);border:1px solid rgba(240,192,64,.18);color:var(--yellow)}
+
+    /* ── Bullet list ── */
+    .blist{list-style:none}
+    .blist li{font-size:11px;color:#aaa;margin-bottom:5px;display:flex;gap:6px;line-height:1.5}
+
+    /* ── Score bars ── */
+    .bar-bg{height:5px;background:#111122;border-radius:3px;overflow:hidden;margin:6px 0}
+    .bar-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+    /* ── Experience ── */
+    .exp-item{padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #111122}
+    .exp-item:last-child{border-bottom:none;margin:0;padding:0}
+    .exp-role{font-size:12px;font-weight:700;color:#fff}
+    .exp-co{font-size:10px;color:var(--accent);margin-top:2px}
+    .exp-per{color:#333;margin-left:6px}
+    .exp-desc{font-size:10px;color:#666;margin-top:4px;line-height:1.6}
+
+    /* ── Job match ── */
+    .jm-big{text-align:center;padding:18px;border:2px solid var(--accent);border-radius:8px;margin-bottom:10px}
+    .jm-big .num{font-size:52px;font-weight:900;color:var(--accent);line-height:1;font-family:Georgia,serif}
+    .jm-big .verd{font-size:15px;font-weight:700;color:#fff;margin-top:6px}
+    .jm-big .summ{font-size:11px;color:#777;margin-top:6px;line-height:1.6}
+    .dec-badge{display:inline-block;margin-top:12px;padding:5px 16px;border-radius:20px;font-size:11px;font-weight:700}
+
+    /* ── Compare ── */
+    .cand-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:8px}
+    .winner{background:linear-gradient(135deg,rgba(192,132,252,.12),rgba(0,229,160,.08));
+      border:1px solid rgba(192,132,252,.25);border-radius:8px;padding:14px;margin-bottom:14px}
+
+    /* ── Improve ── */
+    .imp-action{background:var(--surface);border:1px solid var(--border);border-radius:6px;
+      padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start}
+    .imp-pri{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:900;flex-shrink:0;margin-top:1px}
+    .imp-score-box{display:flex;justify-content:space-between;align-items:center;
+      background:rgba(240,192,64,.05);border:1px solid rgba(240,192,64,.2);border-radius:6px;
+      padding:14px 20px;margin-bottom:10px}
+    .imp-score-num{font-size:36px;font-weight:900;font-family:Georgia,serif;line-height:1}
+
+    /* ── Cover Letter ── */
+    .cl-letter{white-space:pre-line;font-size:12px;color:#c0c8d8;line-height:1.9;
+      background:var(--bg);border:1px solid var(--border);border-radius:6px;
+      padding:20px;margin-bottom:10px}
+    .cl-copy{width:100%;padding:10px;margin-top:8px;background:rgba(77,159,255,.08);
+      border:1px solid rgba(77,159,255,.25);color:var(--blue);border-radius:4px;
+      cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;letter-spacing:1px}
+    .cl-copy:hover{background:rgba(77,159,255,.15)}
+
+    /* ── Translate ── */
+    .tr-result{white-space:pre-wrap;font-size:11px;color:#b0c0b0;line-height:1.8;
+      background:var(--bg);border:1px solid rgba(0,229,160,.2);border-radius:6px;
+      padding:18px;max-height:420px;overflow-y:auto;margin-bottom:10px}
+
+    /* ── Matching ── */
+    .match-matrix{overflow-x:auto;margin-bottom:12px}
+    .match-table{border-collapse:collapse;width:100%;font-size:11px}
+    .match-table th{background:#111122;color:var(--muted);padding:8px 12px;text-align:left;
+      border:1px solid var(--border);font-size:9px;letter-spacing:2px;text-transform:uppercase}
+    .match-table td{padding:8px 12px;border:1px solid var(--border);color:#aaa;vertical-align:middle}
+    .match-table tr:hover td{background:rgba(255,255,255,.02)}
+    .score-chip{display:inline-block;padding:3px 10px;border-radius:20px;font-weight:700;font-size:11px}
+
+    /* ── Share banner ── */
+    .share-bar{margin-top:10px;padding:10px 14px;background:rgba(0,229,160,.06);
+      border:1px solid rgba(0,229,160,.2);border-radius:6px;display:none;
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .share-url{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:4px;
+      color:var(--accent);font-size:11px;padding:6px 10px;font-family:inherit;outline:none;min-width:200px}
+
+    /* ── Lang buttons ── */
+    .lang-btn{padding:6px 14px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;
+      font-family:inherit;transition:all .2s;border:1px solid var(--border);background:transparent;color:var(--muted)}
+    .lang-btn.active{border-color:var(--blue);background:rgba(77,159,255,.12);color:var(--blue)}
+
+    /* ── Divider ── */
+    .div-or{display:flex;align-items:center;gap:8px;margin:10px 0}
+    .div-or hr{flex:1;border:none;border-top:1px solid var(--border)}
+    .div-or span{color:#333;font-size:10px}
+
+    /* ── Mobile tweaks ── */
+    @media(max-width:600px){
+      .mode-tab{padding:7px 10px;font-size:10px}
+      .hdr{flex-direction:column;align-items:flex-start}
+      .two-col{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="hdr">
+    <div class="logo">
+      <div class="logo-tag">Beta Testing sistem analiză </div>
+      <h1>CV<span>.</span>scanner</h1>
+      <p>analiză · job match · comparare · îmbunătățire · scrisoare · traducere · matching</p>
+    </div>
+    <div id="scoreBadge" class="score-badge">
+      <div class="sn" id="badgeNum">0</div>
+      <div class="ss" id="badgeLbl">-</div>
+    </div>
+  </div>
+
+  <!-- Mode Tabs -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('analiza')">📋 Analiză CV</button>
+    <button class="mode-tab" onclick="setMode('jobmatch')">🎯 Job Match</button>
+    <button class="mode-tab" onclick="setMode('comparare')">⚖️ Comparare</button>
+    <button class="mode-tab" onclick="setMode('improve')">✨ Îmbunătățire</button>
+    <button class="mode-tab" onclick="setMode('coverletter')">✉️ Scrisoare</button>
+    <button class="mode-tab" onclick="setMode('translate')">🌍 Traducere</button>
+    <button class="mode-tab" onclick="setMode('matching')">🔀 Matching Auto</button>
+  </div>
+
+  <!-- ══ PANEL: Analiză CV ══ -->
+  <div class="panel active" id="panel-analiza">
+    <div class="two-col" id="grid-analiza">
+      <div>
+        <div class="clabel ca" style="margin-bottom:8px">// upload cv</div>
+        <div class="upload-zone" id="dz-a" onclick="triggerFile('fa')"
+             ondragover="onDrag(event,'dz-a',true)" ondragleave="onDrag(event,'dz-a',false)" ondrop="onDrop(event,'dz-a','cva')">
+          <div class="icon" id="dz-a-icon">📁</div>
+          <div class="lbl" id="dz-a-lbl">drag & drop sau click</div>
+          <div class="sub"><span style="color:var(--red)">PDF</span> · <span style="color:var(--yellow)">TXT</span></div>
+        </div>
+        <input type="file" id="fa" accept=".pdf,.txt" style="display:none" onchange="fileIn(this,'cva')">
+        <div class="div-or"><hr/><span>sau lipește text</span><hr/></div>
+        <textarea class="h160" id="cv-text" placeholder="lipește conținutul CV-ului..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-g" id="btn-a" onclick="doAnalyze()" style="flex:1">[ analizează cv ]</button>
+          <button class="btn-sm" id="btn-a-reset" onclick="resetA()" style="display:none">✕</button>
+        </div>
+        <button class="btn" id="btn-export" onclick="exportPDF()" style="display:none;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);color:var(--accent)">[ ↓ export pdf ]</button>
+        <div class="err" id="err-a"></div>
+        <div class="loading" id="ld-a">
+          <div class="step">› scanare structură cv...</div>
+          <div class="step">› identificare competențe...</div>
+          <div class="step">› evaluare pe categorii...</div>
+          <div class="step">› calculare scoruri detaliate...</div>
+        </div>
+        <!-- Share bar -->
+        <div class="share-bar" id="share-a" style="display:none">
+          <span style="font-size:10px;color:var(--accent);letter-spacing:1px;white-space:nowrap">🔗 link partajare:</span>
+          <input class="share-url" id="share-url-a" readonly onclick="this.select()"/>
+          <button class="btn-sm" onclick="copyShare('share-url-a')" style="white-space:nowrap;border-color:var(--accent);color:var(--accent)">📋 copiază</button>
+        </div>
+      </div>
+
+      <div id="res-analiza" style="display:none">
+        <div class="rtabs">
+          <button class="rtab active" onclick="setRTab(this,'tab-profil')">Profil</button>
+          <button class="rtab" onclick="setRTab(this,'tab-scoruri')">Scoruri</button>
+          <button class="rtab" onclick="setRTab(this,'tab-detalii')">Detalii</button>
+        </div>
+
+        <div class="rpanel active" id="tab-profil">
+          <div class="card">
+            <div class="sc-wrap">
+              <div class="sc-circle" id="sc1"><div class="sc-num" id="sc1n">0</div><div class="sc-sub">/100</div></div>
+              <div class="sc-info">
+                <div class="name" id="sc-name">-</div>
+                <div class="title" id="sc-title">-</div>
+                <div class="contact" id="sc-contact"></div>
+                <div class="summary" id="sc-summary"></div>
+              </div>
+            </div>
+          </div>
+          <div class="card"><div class="clabel ca">⚡ skills</div><div class="tags" id="sc-skills"></div><div class="tags" id="sc-limbi" style="margin-top:6px"></div></div>
+          <div class="grid-2">
+            <div class="card"><div class="clabel ca">✓ puncte forte</div><ul class="blist" id="sc-forte"></ul></div>
+            <div class="card"><div class="clabel cr">✗ de îmbunătățit</div><ul class="blist" id="sc-slabe"></ul></div>
+          </div>
+        </div>
+
+        <div class="rpanel" id="tab-scoruri">
+          <div class="card" style="margin-bottom:10px">
+            <div class="sc-wrap">
+              <div class="sc-circle" id="sc2" style="width:82px;height:82px"><div class="sc-num" id="sc2n" style="font-size:28px">0</div><div class="sc-sub">/100</div></div>
+              <div><div style="font-size:15px;font-weight:700;color:var(--accent);font-family:Georgia,serif" id="sc-overall">-</div>
+              <div style="font-size:10px;color:#555;margin-top:5px;line-height:1.6">Media celor 4 categorii de evaluare</div></div>
+            </div>
+          </div>
+          <div id="sc-cats"></div>
+        </div>
+
+        <div class="rpanel" id="tab-detalii">
+          <div class="card"><div class="clabel cm">💼 experiență</div><div id="sc-exp"></div></div>
+          <div class="card"><div class="clabel cm">🎓 educație</div><div style="font-size:11px;color:#c0c0d0" id="sc-edu"></div></div>
+          <div class="card" style="background:rgba(0,229,160,.04);border-color:rgba(0,229,160,.15)">
+            <div class="clabel ca">💬 recomandare hr</div>
+            <div style="font-size:12px;color:#aad;font-style:italic;line-height:1.7" id="sc-rec"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: Job Match ══ -->
+  <div class="panel" id="panel-jobmatch">
+    <div class="two-col" id="grid-jm">
+      <div>
+        <div class="clabel cb" style="margin-bottom:8px">// cv-ul candidatului</div>
+        <div id="jm-loaded" style="display:none" class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:11px;color:var(--accent);font-weight:700" id="jm-cv-name">CV</div>
+            <div style="font-size:10px;color:#444" id="jm-cv-chars">-</div></div>
+            <button class="btn-sm" onclick="clearJmCv()">schimbă</button>
+          </div>
+        </div>
+        <div id="jm-input">
+          <div class="upload-zone" id="dz-jm" onclick="triggerFile('fjm')"
+               ondragover="onDrag(event,'dz-jm',true)" ondragleave="onDrag(event,'dz-jm',false)" ondrop="onDrop(event,'dz-jm','jmcv')">
+            <div class="icon">📁</div><div class="lbl">upload CV (PDF/TXT)</div>
+          </div>
+          <input type="file" id="fjm" accept=".pdf,.txt" style="display:none" onchange="fileIn(this,'jmcv')">
+          <div class="div-or"><hr/><span>sau text</span><hr/></div>
+          <textarea class="h100" id="jm-cv-t" placeholder="lipește CV-ul..."></textarea>
+        </div>
+        <div class="clabel" style="color:var(--blue);margin:14px 0 6px">// descrierea jobului</div>
+        <textarea class="h100" id="jm-job-t" placeholder="Lipește descrierea jobului..."
+          onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        <button class="btn btn-b" id="btn-jm" onclick="doJobMatch()">[ calculează job match ]</button>
+        <div class="err" id="err-jm"></div>
+        <div class="loading" id="ld-jm">
+          <div class="step" style="color:var(--blue)">› citire cerințe job...</div>
+          <div class="step" style="color:var(--blue)">› comparare cu cv-ul...</div>
+          <div class="step" style="color:var(--blue)">› identificare gaps...</div>
+          <div class="step" style="color:var(--blue)">› calcul scor compatibilitate...</div>
+        </div>
+        <div class="share-bar" id="share-jm" style="display:none">
+          <span style="font-size:10px;color:var(--accent);letter-spacing:1px;white-space:nowrap">🔗 link:</span>
+          <input class="share-url" id="share-url-jm" readonly onclick="this.select()"/>
+          <button class="btn-sm" onclick="copyShare('share-url-jm')" style="border-color:var(--accent);color:var(--accent)">📋</button>
+        </div>
+      </div>
+      <div id="res-jm" style="display:none">
+        <div class="clabel cb" style="margin-bottom:10px">// rezultat job match</div>
+        <div class="jm-big" id="jm-big">
+          <div class="num" id="jm-num">0</div>
+          <div class="verd" id="jm-verd">-</div>
+          <div class="summ" id="jm-summ">-</div>
+          <div class="dec-badge" id="jm-dec">-</div>
+        </div>
+        <div class="grid-2">
+          <div class="card"><div class="clabel ca">✓ skills match</div><div id="jm-match"></div></div>
+          <div class="card"><div class="clabel cr">✗ lipsesc</div><div id="jm-lipsa"></div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card"><div class="clabel cb">💪 motive</div><ul class="blist" id="jm-forte"></ul></div>
+          <div class="card"><div class="clabel cy">⚠ riscuri</div><ul class="blist" id="jm-risc"></ul></div>
+        </div>
+        <div class="card" style="background:rgba(77,159,255,.04);border-color:rgba(77,159,255,.15)">
+          <div class="clabel cb">💡 sfaturi candidat</div>
+          <ul class="blist" id="jm-sfat"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: Comparare ══ -->
+  <div class="panel" id="panel-comparare">
+    <div class="two-col" id="grid-cmp">
+      <div>
+        <div class="clabel cp" style="margin-bottom:8px">// upload 2-5 cv-uri</div>
+        <div class="upload-zone" id="dz-cmp" style="border-color:#2a1a4a" onclick="triggerFile('fcmp')"
+             ondragover="onDrag(event,'dz-cmp',true)" ondragleave="onDrag(event,'dz-cmp',false)" ondrop="onDrop(event,'dz-cmp','cmp')">
+          <div class="icon">📂</div><div class="lbl">selectează 2-5 fișiere</div>
+          <div class="sub"><span style="color:var(--red)">PDF</span> · <span style="color:var(--yellow)">TXT</span></div>
+        </div>
+        <input type="file" id="fcmp" accept=".pdf,.txt" multiple style="display:none" onchange="handleMulti(this.files,'cmp')">
+        <div id="cmp-list" style="display:none;margin-bottom:10px">
+          <div class="clabel cm" style="margin-bottom:6px">cv-uri încărcate</div>
+          <div id="cmp-items"></div>
+        </div>
+        <button class="btn btn-p" id="btn-cmp" onclick="doCompare()" disabled>[ adaugă min. 2 cv-uri ]</button>
+        <div class="err" id="err-cmp"></div>
+        <div class="loading" id="ld-cmp">
+          <div class="step" style="color:var(--purple)">› citire cv-uri...</div>
+          <div class="step" style="color:var(--purple)">› analiză comparativă...</div>
+          <div class="step" style="color:var(--purple)">› calculare scoruri...</div>
+          <div class="step" style="color:var(--purple)">› generare ranking...</div>
+        </div>
+      </div>
+      <div id="res-cmp" style="display:none">
+        <div class="clabel cp" style="margin-bottom:10px">// ranking candidați</div>
+        <div class="winner" id="cmp-winner">
+          <div style="font-size:9px;letter-spacing:3px;color:var(--yellow);text-transform:uppercase;margin-bottom:4px">🏆 câștigător</div>
+          <div style="font-size:17px;font-weight:700;color:#fff" id="cmp-win-name">-</div>
+          <div style="font-size:11px;color:#888;margin-top:5px;line-height:1.6" id="cmp-win-mot">-</div>
+        </div>
+        <div id="cmp-cards"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: Îmbunătățire ══ -->
+  <div class="panel" id="panel-improve">
+    <div class="two-col" id="grid-imp">
+      <div>
+        <div class="clabel cy" style="margin-bottom:8px">// upload cv</div>
+        <div class="upload-zone" id="dz-imp" style="border-color:#2a2800" onclick="triggerFile('fimp')"
+             ondragover="onDrag(event,'dz-imp',true)" ondragleave="onDrag(event,'dz-imp',false)" ondrop="onDrop(event,'dz-imp','imp')">
+          <div class="icon" id="dz-imp-icon">📁</div>
+          <div class="lbl" id="dz-imp-lbl">drag & drop sau click</div>
+          <div class="sub"><span style="color:var(--red)">PDF</span> · <span style="color:var(--yellow)">TXT</span></div>
+        </div>
+        <input type="file" id="fimp" accept=".pdf,.txt" style="display:none" onchange="fileIn(this,'imp')">
+        <div class="div-or"><hr/><span>sau lipește text</span><hr/></div>
+        <textarea class="h160" id="imp-text" placeholder="lipește CV-ul pentru analiza de îmbunătățire..."></textarea>
+        <button class="btn btn-y" id="btn-imp" onclick="doImprove()">[ generează sugestii ]</button>
+        <div class="err" id="err-imp"></div>
+        <div class="loading" id="ld-imp">
+          <div class="step" style="color:var(--yellow)">› scanare structură...</div>
+          <div class="step" style="color:var(--yellow)">› identificare probleme...</div>
+          <div class="step" style="color:var(--yellow)">› generare recomandări concrete...</div>
+          <div class="step" style="color:var(--yellow)">› calculare impact potențial...</div>
+        </div>
+      </div>
+      <div id="res-imp" style="display:none">
+        <div class="clabel cy" style="margin-bottom:10px">// plan de îmbunătățire</div>
+        <div class="imp-score-box">
+          <div style="text-align:center">
+            <div style="font-size:9px;letter-spacing:2px;color:#555;text-transform:uppercase;margin-bottom:4px">scor actual</div>
+            <div class="imp-score-num" style="color:var(--red)" id="imp-cur">0</div>
+          </div>
+          <div style="font-size:24px;color:#222">→</div>
+          <div style="text-align:center">
+            <div style="font-size:9px;letter-spacing:2px;color:#555;text-transform:uppercase;margin-bottom:4px">după îmbunătățiri</div>
+            <div class="imp-score-num" style="color:var(--accent)" id="imp-est">0</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:#666;font-style:italic;text-align:center;margin-bottom:12px;line-height:1.6" id="imp-rez"></div>
+        <div class="clabel cy" style="margin-bottom:8px">🎯 top 5 acțiuni prioritare</div>
+        <div id="imp-top5"></div>
+        <div class="clabel cy" style="margin:12px 0 8px">📋 analiză pe secțiuni</div>
+        <div id="imp-sect"></div>
+        <div class="grid-2" style="margin-top:10px">
+          <div class="card"><div class="clabel cp">🔍 keywords lipsă</div><div class="tags" id="imp-kw" style="margin-top:4px"></div></div>
+          <div class="card"><div class="clabel cb">📐 formatare</div><ul class="blist" id="imp-fmt"></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: Scrisoare Intenție ══ -->
+  <div class="panel" id="panel-coverletter">
+    <div class="two-col" id="grid-cl">
+      <div>
+        <div class="clabel cb" style="margin-bottom:8px">// cv-ul candidatului</div>
+        <div id="cl-loaded" style="display:none" class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:11px;color:var(--accent);font-weight:700" id="cl-cv-name">CV</div>
+            <div style="font-size:10px;color:#444" id="cl-cv-chars">-</div></div>
+            <button class="btn-sm" onclick="clearClCv()">schimbă</button>
+          </div>
+        </div>
+        <div id="cl-input">
+          <div class="upload-zone" id="dz-cl" onclick="triggerFile('fcl')"
+               ondragover="onDrag(event,'dz-cl',true)" ondragleave="onDrag(event,'dz-cl',false)" ondrop="onDrop(event,'dz-cl','clcv')">
+            <div class="icon">📁</div><div class="lbl">upload CV (PDF/TXT)</div>
+          </div>
+          <input type="file" id="fcl" accept=".pdf,.txt" style="display:none" onchange="fileIn(this,'clcv')">
+          <div class="div-or"><hr/><span>sau text</span><hr/></div>
+          <textarea class="h80" id="cl-cv-t" placeholder="lipește CV-ul..."></textarea>
+        </div>
+        <div class="clabel cm" style="margin:12px 0 6px">// descriere job (opțional)</div>
+        <textarea class="h80" id="cl-job-t" placeholder="Descrierea jobului pentru o scrisoare mai personalizată..."
+          onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        <div class="clabel cm" style="margin:10px 0 6px">// limba</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="lang-btn active" id="lb-ro" onclick="setLang(this,'romana')">🇷🇴 Română</button>
+          <button class="lang-btn" id="lb-en" onclick="setLang(this,'engleza')">🇬🇧 Engleză</button>
+          <button class="lang-btn" id="lb-fr" onclick="setLang(this,'franceza')">🇫🇷 Franceză</button>
+        </div>
+        <button class="btn btn-b" id="btn-cl" onclick="doCoverLetter()" style="margin-top:12px">[ generează scrisoare ]</button>
+        <div class="err" id="err-cl"></div>
+        <div class="loading" id="ld-cl">
+          <div class="step" style="color:var(--blue)">› citire profil candidat...</div>
+          <div class="step" style="color:var(--blue)">› analiză cerințe job...</div>
+          <div class="step" style="color:var(--blue)">› personalizare ton și conținut...</div>
+          <div class="step" style="color:var(--blue)">› redactare scrisoare finală...</div>
+        </div>
+      </div>
+      <div id="res-cl" style="display:none">
+        <div class="clabel cb" style="margin-bottom:10px">// scrisoare generată</div>
+        <div class="card" style="margin-bottom:10px;border-color:rgba(77,159,255,.2)">
+          <div style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:5px">Subiect Email:</div>
+          <div style="font-size:12px;color:#ddd;font-weight:600" id="cl-sub">-</div>
+        </div>
+        <div class="cl-letter" id="cl-letter">-</div>
+        <button class="cl-copy" onclick="copyText('cl-letter')">[ 📋 copiază scrisoarea ]</button>
+        <div class="grid-2" style="margin-top:10px">
+          <div class="card"><div class="clabel cb">💡 sfaturi personalizare</div><ul class="blist" id="cl-sfat"></ul></div>
+          <div class="card"><div class="clabel ca">✓ puncte cheie evidențiate</div><ul class="blist" id="cl-pct"></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: Traducere ══ -->
+  <div class="panel" id="panel-translate">
+    <div class="two-col" id="grid-tr">
+      <div>
+        <div class="clabel ca" style="margin-bottom:8px">// cv-ul de tradus</div>
+        <div class="upload-zone" id="dz-tr" onclick="triggerFile('ftr')"
+             ondragover="onDrag(event,'dz-tr',true)" ondragleave="onDrag(event,'dz-tr',false)" ondrop="onDrop(event,'dz-tr','trcv')">
+          <div class="icon" id="dz-tr-icon">📁</div>
+          <div class="lbl" id="dz-tr-lbl">drag & drop sau click</div>
+          <div class="sub"><span style="color:var(--red)">PDF</span> · <span style="color:var(--yellow)">TXT</span></div>
+        </div>
+        <input type="file" id="ftr" accept=".pdf,.txt" style="display:none" onchange="fileIn(this,'trcv')">
+        <div class="div-or"><hr/><span>sau lipește text</span><hr/></div>
+        <textarea class="h160" id="tr-text" placeholder="lipește CV-ul de tradus..."></textarea>
+        <div class="clabel cm" style="margin:10px 0 6px">// limba țintă</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="lang-btn active" id="tl-en" onclick="setTrLang(this,'engleza')">🇬🇧 Engleză</button>
+          <button class="lang-btn" id="tl-fr" onclick="setTrLang(this,'franceza')">🇫🇷 Franceză</button>
+          <button class="lang-btn" id="tl-de" onclick="setTrLang(this,'germana')">🇩🇪 Germană</button>
+          <button class="lang-btn" id="tl-ro" onclick="setTrLang(this,'romana')">🇷🇴 Română</button>
+        </div>
+        <button class="btn btn-g" id="btn-tr" onclick="doTranslate()" style="margin-top:12px">[ traduce cv ]</button>
+        <div class="err" id="err-tr"></div>
+        <div class="loading" id="ld-tr">
+          <div class="step">› analiză structură cv...</div>
+          <div class="step">› traducere secțiuni...</div>
+          <div class="step">› adaptare terminologie...</div>
+          <div class="step">› finalizare și formatare...</div>
+        </div>
+      </div>
+      <div id="res-tr" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="clabel ca">// cv tradus</div>
+          <button class="btn-sm" onclick="copyText('tr-result')" style="border-color:var(--accent);color:var(--accent)">📋 copiază tot</button>
+        </div>
+        <div class="tr-result" id="tr-result">-</div>
+        <div class="grid-2">
+          <div class="card"><div class="clabel ca">💡 tips localizare</div><ul class="blist" id="tr-tips"></ul></div>
+          <div class="card"><div class="clabel cb">🔄 termeni adaptați</div>
+            <div id="tr-terms" style="font-size:10px;color:#666;line-height:1.8"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: Matching Auto ══ -->
+  <div class="panel" id="panel-matching">
+    <div class="two-col" id="grid-mat">
+      <div>
+        <div class="clabel ca" style="margin-bottom:8px">// cv-uri candidați (1-5)</div>
+        <div class="upload-zone" id="dz-mat-cv" style="border-color:#1a2a1a" onclick="triggerFile('fmat-cv')"
+             ondragover="onDrag(event,'dz-mat-cv',true)" ondragleave="onDrag(event,'dz-mat-cv',false)" ondrop="onDrop(event,'dz-mat-cv','matcv')">
+          <div class="icon">📂</div><div class="lbl">selectează 1-5 CV-uri</div>
+          <div class="sub"><span style="color:var(--red)">PDF</span> · <span style="color:var(--yellow)">TXT</span></div>
+        </div>
+        <input type="file" id="fmat-cv" accept=".pdf,.txt" multiple style="display:none" onchange="handleMulti(this.files,'matcv')">
+        <div id="mat-cv-list" style="display:none;margin-bottom:10px">
+          <div class="clabel cm" style="margin-bottom:4px">cv-uri</div>
+          <div id="mat-cv-items"></div>
+        </div>
+
+        <div class="clabel cb" style="margin:12px 0 8px">// descrieri joburi (1-5)</div>
+        <div id="mat-jobs-list">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:10px;color:#444" id="mat-job-count">0 joburi adăugate</span>
+            <button class="btn-sm" onclick="addJobField()" style="border-color:var(--blue);color:var(--blue)">+ adaugă job</button>
+          </div>
+          <div id="mat-job-fields"></div>
+        </div>
+
+        <button class="btn btn-g" id="btn-mat" onclick="doMatching()" disabled style="margin-top:12px">[ calculează matching ]</button>
+        <div class="err" id="err-mat"></div>
+        <div class="loading" id="ld-mat">
+          <div class="step">› citire cv-uri și joburi...</div>
+          <div class="step">› analiză cerințe...</div>
+          <div class="step">› calculare toate combinațiile...</div>
+          <div class="step">› generare ranking final...</div>
+        </div>
+      </div>
+      <div id="res-mat" style="display:none">
+        <div class="clabel ca" style="margin-bottom:10px">// rezultate matching</div>
+        <div class="card" style="margin-bottom:10px;border-color:rgba(0,229,160,.15);background:rgba(0,229,160,.04)">
+          <div class="clabel ca" style="margin-bottom:5px">📊 rezumat</div>
+          <div style="font-size:11px;color:#888;line-height:1.7" id="mat-rez">-</div>
+        </div>
+        <div class="clabel ca" style="margin-bottom:8px">🏆 best match per job</div>
+        <div id="mat-best" style="margin-bottom:12px"></div>
+        <div class="clabel cm" style="margin-bottom:8px">📋 toate combinațiile</div>
+        <div class="match-matrix"><table class="match-table" id="mat-table">
+          <thead><tr><th>Candidat</th><th>Job</th><th>Scor</th><th>Verdict</th><th>Recomandare</th></tr></thead>
+          <tbody id="mat-rows"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:32px;font-size:10px;color:#1a1a2a;letter-spacing:2px;text-align:center">
+    cv.scanner // python + flask // powered by claude ai
+  </div>
+</div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── State ──────────────────────────────────────────────
+let cvTextMain='', jmCvText='', clCvText='', trCvText='';
+let cmpFiles=[], matCvFiles=[], matJobs=[];
+let clLang='romana', trLang='engleza';
+let lastResult=null, lastMode='analiza';
+
+// ── Utils ──────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+const show=id=>{const e=$(id);if(e)e.style.display='block'};
+const hide=id=>{const e=$(id);if(e)e.style.display='none'};
+const showFlex=id=>{const e=$(id);if(e)e.style.display='flex'};
+const scoreColor=s=>s>=80?'var(--accent)':s>=60?'var(--yellow)':'var(--red)';
+const scoreLabel=s=>s>=80?'Excelent':s>=60?'Bun':'De îmbunătățit';
+
+function showErr(id,msg){const e=$(id);if(e){e.textContent='⚠ '+msg;e.style.display='block'}}
+function hideErr(id){hide(id)}
+function triggerFile(id){$(id).click()}
+
+// ── Mode switching ─────────────────────────────────────
+function setMode(mode){
+  document.querySelectorAll('.mode-tab').forEach((t,i)=>{
+    t.classList.toggle('active',['analiza','jobmatch','comparare','improve','coverletter','translate','matching'][i]===mode);
+  });
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  $('panel-'+mode).classList.add('active');
+}
+
+function setRTab(btn,tabId){
+  const container=btn.closest('.rtabs');
+  container.querySelectorAll('.rtab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const panel=btn.closest('.rpanel,.panel,.two-col')?.parentElement||btn.closest('.two-col');
+  document.querySelectorAll('.rpanel').forEach(p=>{
+    if(p.id===tabId)p.classList.add('active');
+    else if([...container.querySelectorAll('.rtab')].some(t=>t.getAttribute('onclick')?.includes(p.id)))p.classList.remove('active');
+  });
+  // simple approach
+  const res=$('res-analiza');
+  if(res){
+    res.querySelectorAll('.rpanel').forEach(p=>p.classList.toggle('active',p.id===tabId));
+    res.querySelectorAll('.rtab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+  }
+}
+
+// ── Drag & Drop ────────────────────────────────────────
+function onDrag(e,id,over){e.preventDefault();$(id)?.classList.toggle('drag',over)}
+function onDrop(e,id,type){e.preventDefault();$(id)?.classList.remove('drag');
+  const f=e.dataTransfer.files;
+  if(type==='cmp'||type==='matcv')handleMulti(f,type);
+  else if(f[0])processFile(f[0],type);}
+function fileIn(inp,type){
+  if(type==='cmp'||type==='matcv')handleMulti(inp.files,type);
+  else if(inp.files[0])processFile(inp.files[0],type);}
+
+// ── Text extraction ────────────────────────────────────
+async function extractText(file){
+  if(file.type==='application/pdf'){
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    let t='';
+    for(let i=1;i<=pdf.numPages;i++){
+      const pg=await pdf.getPage(i);
+      const c=await pg.getTextContent();
+      t+=c.items.map(x=>x.str).join(' ')+'\n';
+    }
+    if(!t.trim())throw new Error('PDF scanat — folosește un PDF cu text selectabil.');
+    return t.trim();
+  }else{
+    return new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=e=>res(e.target.result);
+      r.onerror=()=>rej(new Error('Eroare la citire'));
+      r.readAsText(file);
+    });
+  }
+}
+
+async function processFile(file,type){
+  const icons={cva:['dz-a-icon','dz-a-lbl'],imp:['dz-imp-icon','dz-imp-lbl'],trcv:['dz-tr-icon','dz-tr-lbl']};
+  try{
+    if(icons[type]){
+      $(icons[type][1]).textContent='⏳ se extrage text...';
+    }
+    const text=await extractText(file);
+    if(type==='cva'){cvTextMain=text;$('cv-text').value=text;$(icons[type][0]).textContent=file.name.endsWith('.pdf')?'📕':'📄';$(icons[type][1]).textContent=file.name;}
+    else if(type==='jmcv'){jmCvText=text;$('jm-cv-t').value=text;$('jm-cv-name').textContent=file.name;$('jm-cv-chars').textContent=text.length.toLocaleString()+' caractere';show('jm-loaded');hide('jm-input');}
+    else if(type==='clcv'){clCvText=text;$('cl-cv-t').value=text;$('cl-cv-name').textContent=file.name;$('cl-cv-chars').textContent=text.length.toLocaleString()+' caractere';show('cl-loaded');hide('cl-input');}
+    else if(type==='imp'){$('imp-text').value=text;$(icons[type][0]).textContent=file.name.endsWith('.pdf')?'📕':'📄';$(icons[type][1]).textContent=file.name;}
+    else if(type==='trcv'){trCvText=text;$('tr-text').value=text;$(icons[type][0]).textContent=file.name.endsWith('.pdf')?'📕':'📄';$(icons[type][1]).textContent=file.name;}
+  }catch(e){showErr('err-a',e.message);}
+}
+
+async function handleMulti(fileList,type){
+  const files=Array.from(fileList).slice(0,5);
+  const arr=[];
+  for(const f of files){
+    try{const text=await extractText(f);arr.push({name:f.name,text});}
+    catch(e){showErr(type==='cmp'?'err-cmp':'err-mat','Eroare '+f.name+': '+e.message);}
+  }
+  if(type==='cmp'){cmpFiles=arr;renderCmpList();}
+  else if(type==='matcv'){matCvFiles=arr;renderMatCvList();}
+}
+
+function renderCmpList(){
+  if(!cmpFiles.length){hide('cmp-list');return;}
+  show('cmp-list');
+  $('cmp-items').innerHTML=cmpFiles.map((f,i)=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 10px;background:var(--surface);border:1px solid var(--border);border-radius:4px;margin-bottom:5px">
+    <span>${f.name.endsWith('.pdf')?'📕':'📄'}</span>
+    <span style="flex:1;font-size:11px;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+    <span style="font-size:10px;color:var(--purple)">#${i+1}</span>
+  </div>`).join('');
+  const btn=$('btn-cmp');
+  btn.disabled=cmpFiles.length<2;
+  btn.textContent=cmpFiles.length<2?'[ adaugă min. 2 cv-uri ]':`[ compară ${cmpFiles.length} cv-uri ]`;
+}
+
+function renderMatCvList(){
+  if(!matCvFiles.length){hide('mat-cv-list');return;}
+  show('mat-cv-list');
+  $('mat-cv-items').innerHTML=matCvFiles.map((f,i)=>`<div style="display:flex;gap:8px;align-items:center;padding:5px 10px;background:var(--surface);border:1px solid var(--border);border-radius:4px;margin-bottom:4px">
+    <span style="font-size:12px">${f.name.endsWith('.pdf')?'📕':'📄'}</span>
+    <span style="flex:1;font-size:10px;color:#ccc;overflow:hidden;text-overflow:ellipsis">${f.name}</span>
+  </div>`).join('');
+  updateMatBtn();
+}
+
+// ── Job fields for matching ────────────────────────────
+function addJobField(){
+  if(matJobs.length>=5)return;
+  const idx=matJobs.length;
+  matJobs.push({title:'',text:''});
+  const div=document.createElement('div');
+  div.id=`mat-job-${idx}`;
+  div.style.cssText='margin-bottom:8px;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:4px';
+  div.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:5px">
+    <span style="font-size:10px;color:var(--blue);font-weight:700">Job #${idx+1}</span>
+    <button onclick="removeJob(${idx})" style="background:transparent;border:none;color:#555;cursor:pointer;font-size:12px">✕</button>
+  </div>
+  <input type="text" placeholder="Titlu job (ex: Senior Developer)" oninput="updateJob(${idx},'title',this.value)"
+    style="margin-bottom:5px;height:32px;resize:none">
+  <textarea style="height:70px" placeholder="Cerințe și responsabilități..." oninput="updateJob(${idx},'text',this.value)"
+    onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"></textarea>`;
+  $('mat-job-fields').appendChild(div);
+  updateMatJobCount();updateMatBtn();
+}
+
+function updateJob(idx,field,val){if(matJobs[idx])matJobs[idx][field]=val;updateMatBtn();}
+function removeJob(idx){
+  const el=$(`mat-job-${idx}`);if(el)el.remove();
+  matJobs.splice(idx,1);
+  updateMatJobCount();updateMatBtn();
+}
+function updateMatJobCount(){$('mat-job-count').textContent=matJobs.filter(j=>j.title||j.text).length+' joburi adăugate';}
+function updateMatBtn(){
+  const validJobs=matJobs.filter(j=>j.title.trim()||j.text.trim());
+  const ok=matCvFiles.length>=1&&validJobs.length>=1;
+  $('btn-mat').disabled=!ok;
+  const jobLabel=validJobs.length>1?'uri':'';
+  $('btn-mat').textContent=ok?`[ matching ${matCvFiles.length} cv x ${validJobs.length} job${jobLabel} ]`:'[ calculează matching ]';
+}
+
+// ── API calls ──────────────────────────────────────────
+async function api(endpoint,body){
+  const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data=await res.json();
+  if(!res.ok||data.error)throw new Error(data.error||'Eroare server');
+  return data.data;
+}
+
+// ── Share ──────────────────────────────────────────────
+async function shareResult(result,mode,title,urlInputId,shareBarId){
+  try{
+    const res=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({result,mode,title})});
+    const data=await res.json();
+    if(data.shareId){
+      const url=`${window.location.origin}/share/${data.shareId}`;
+      $(urlInputId).value=url;
+      $(shareBarId).style.display='flex';
+    }
+  }catch(e){console.warn('Share failed:',e);}
+}
+
+function copyShare(inputId){
+  $(inputId).select();
+  document.execCommand('copy');
+  const btn=document.querySelector(`button[onclick="copyShare('${inputId}')"]`);
+  if(btn){const orig=btn.textContent;btn.textContent='✓ copiat!';setTimeout(()=>btn.textContent=orig,2000);}
+}
+
+function copyText(id){
+  const el=$(id);
+  const text=el.innerText||el.textContent||el.value;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=el.nextElementSibling;
+    if(btn){const orig=btn.textContent;btn.textContent='✓ copiat!';setTimeout(()=>btn.textContent=orig,2000);}
+  });
+}
+
+// ── Load shared analysis on page load ─────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  const path=window.location.pathname;
+  const match=path.match(/\/share\/([a-f0-9\-]+)/i);
+  if(match){
+    fetch(`/api/share/${match[1]}`).then(r=>r.json()).then(data=>{
+      if(data.success){
+        if(data.mode==='analiza'){setMode('analiza');renderAnalyze(data.result);show('res-analiza');$('grid-analiza').style.gridTemplateColumns='360px 1fr';}
+        else if(data.mode==='jobmatch'){setMode('jobmatch');renderJobMatch(data.result);show('res-jm');$('grid-jm').style.gridTemplateColumns='360px 1fr';}
+      }else{alert('Link expirat sau invalid.');}
+    });
+  }
+  // init first job field for matching
+  addJobField();
+});
+
+// ── Analyze ────────────────────────────────────────────
+async function doAnalyze(){
+  const text=$('cv-text').value.trim()||cvTextMain;
+  if(!text){showErr('err-a','Adaugă un CV mai întâi.');return;}
+  $('btn-a').disabled=true;$('btn-a').textContent='[ analizează... ]';
+  hide('err-a');show('ld-a');hide('res-analiza');$('scoreBadge').style.display='none';
+  try{
+    const r=await api('/api/analyze',{cv_text:text});
+    lastResult=r;lastMode='analiza';
+    renderAnalyze(r);show('res-analiza');
+    if(window.innerWidth>800)$('grid-analiza').style.gridTemplateColumns='360px 1fr';
+    show('btn-export');show('btn-a-reset');
+    shareResult(r,'analiza',r.nume||'Analiză CV','share-url-a','share-a');
+  }catch(e){showErr('err-a',e.message);}
+  finally{hide('ld-a');$('btn-a').disabled=false;$('btn-a').textContent='[ analizează cv ]';}
+}
+
+function renderAnalyze(r){
+  const col=scoreColor(r.scorGeneral);
+  $('badgeNum').textContent=r.scorGeneral;$('badgeNum').style.color=col;
+  $('badgeLbl').textContent=scoreLabel(r.scorGeneral);$('badgeLbl').style.color=col;
+  $('scoreBadge').style.display='flex';
+  [$('sc1'),$('sc2')].forEach(el=>{el.style.borderColor=col;el.style.background=col.replace('var(--accent)','rgba(0,229,160').replace(')',',0.06)');});
+  [$('sc1n'),$('sc2n')].forEach(el=>{el.textContent=r.scorGeneral;el.style.color=col;});
+  $('sc-name').textContent=r.nume||'-';
+  $('sc-title').textContent=r.titlu||'';
+  $('sc-contact').innerHTML=[r.email,r.telefon,r.locatie].filter(Boolean).map(x=>`<span style="margin-right:10px">${x}</span>`).join('');
+  $('sc-summary').textContent=r.rezumat||'';
+  $('sc-skills').innerHTML=(r.skills||[]).map(s=>`<span class="tag tg">${s}</span>`).join('');
+  $('sc-limbi').innerHTML=(r.limbi||[]).map(l=>`<span class="tag tp">🌐 ${l}</span>`).join('');
+  $('sc-forte').innerHTML=(r.puncteFoarte||[]).map(p=>`<li><span style="color:var(--accent)">✓</span> ${p}</li>`).join('');
+  $('sc-slabe').innerHTML=(r.puncteSlabe||[]).map(p=>`<li><span style="color:var(--red)">›</span> ${p}</li>`).join('');
+  $('sc-overall').textContent=`Scor General — ${scoreLabel(r.scorGeneral)}`;$('sc-overall').style.color=col;
+  const cats=[{k:'skills',l:'Skills',i:'⚡',c:'var(--accent)'},{k:'experienta',l:'Experiență',i:'💼',c:'var(--blue)'},
+    {k:'educatie',l:'Educație',i:'🎓',c:'var(--purple)'},{k:'prezentare',l:'Prezentare',i:'✍️',c:'var(--yellow)'}];
+  $('sc-cats').innerHTML=cats.map(cat=>{
+    const s=r.scoruri?.[cat.k];if(!s)return'';
+    return`<div class="card" style="border-left:3px solid ${cat.c}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:7px"><span style="font-size:16px">${cat.i}</span>
+          <span style="font-size:12px;font-weight:700;color:#ddd">${cat.l}</span></div>
+        <span style="font-size:20px;font-weight:900;color:${cat.c};font-family:Georgia,serif">${s.nota}</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${s.nota}%;background:${cat.c}"></div></div>
+      <div style="font-size:10px;color:#666;margin-top:6px;line-height:1.5">${s.comentariu}</div>
+    </div>`;}).join('');
+  $('sc-exp').innerHTML=(r.experienta||[]).map(e=>`<div class="exp-item">
+    <div class="exp-role">${e.rol||''}</div>
+    <div class="exp-co">${e.companie||''}${e.perioada?`<span class="exp-per">— ${e.perioada}</span>`:''}</div>
+    ${e.descriere?`<div class="exp-desc">${e.descriere}</div>`:''}
+  </div>`).join('');
+  $('sc-edu').textContent=r.educatie||'-';
+  $('sc-rec').textContent=`"${r.recomandare||''}"`;
+  const res=$('res-analiza');
+  res.querySelectorAll('.rtab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  res.querySelectorAll('.rpanel').forEach((p,i)=>p.classList.toggle('active',i===0));
+}
+
+function resetA(){
+  cvTextMain='';$('cv-text').value='';
+  $('dz-a-icon').textContent='📁';$('dz-a-lbl').textContent='drag & drop sau click';
+  hide('res-analiza');hide('btn-export');hide('btn-a-reset');hide('err-a');hide('share-a');
+  $('grid-analiza').style.gridTemplateColumns='';$('scoreBadge').style.display='none';lastResult=null;
+}
+
+// ── Job Match ──────────────────────────────────────────
+function clearJmCv(){jmCvText='';$('jm-cv-t').value='';hide('jm-loaded');show('jm-input');}
+
+async function doJobMatch(){
+  const cv=$('jm-cv-t').value.trim()||jmCvText;
+  const job=$('jm-job-t').value.trim();
+  if(!cv||!job){showErr('err-jm','Adaugă CV-ul și descrierea jobului.');return;}
+  $('btn-jm').disabled=true;$('btn-jm').textContent='[ se analizează... ]';
+  hide('err-jm');show('ld-jm');hide('res-jm');
+  try{
+    const r=await api('/api/jobmatch',{cv_text:cv,job_text:job});
+    renderJobMatch(r);show('res-jm');
+    if(window.innerWidth>800)$('grid-jm').style.gridTemplateColumns='360px 1fr';
+    shareResult(r,'jobmatch','Job Match','share-url-jm','share-jm');
+  }catch(e){showErr('err-jm',e.message);}
+  finally{hide('ld-jm');$('btn-jm').disabled=false;$('btn-jm').textContent='[ calculează job match ]';}
+}
+
+function renderJobMatch(r){
+  const col=scoreColor(r.scor);
+  $('jm-big').style.borderColor=col;
+  $('jm-num').textContent=r.scor;$('jm-num').style.color=col;
+  $('jm-verd').textContent=r.verdict||'';
+  $('jm-summ').textContent=r.rezumat||'';
+  const dec=r.decizie||'';
+  const dc=dec==='Recomandat'?'var(--accent)':dec.includes('Nu')?'var(--red)':'var(--yellow)';
+  $('jm-dec').textContent=(dec==='Recomandat'?'✓ ':dec.includes('Nu')?'✗ ':'⚡ ')+dec;
+  $('jm-dec').style.cssText=`background:${dc}18;border:1px solid ${dc}50;color:${dc}`;
+  $('jm-match').innerHTML=(r.skillsMatch||[]).map(s=>`<div style="margin-bottom:4px"><span class="tag tg">${s}</span></div>`).join('');
+  $('jm-lipsa').innerHTML=(r.skillsLipsa||[]).map(s=>`<div style="margin-bottom:4px"><span class="tag tr">${s}</span></div>`).join('');
+  $('jm-forte').innerHTML=(r.puncteFoarte||[]).map(p=>`<li><span style="color:var(--blue)">›</span> ${p}</li>`).join('');
+  $('jm-risc').innerHTML=(r.riscuri||[]).map(p=>`<li><span style="color:var(--yellow)">›</span> ${p}</li>`).join('');
+  $('jm-sfat').innerHTML=(r.sfaturi||[]).map((s,i)=>`<li><span style="color:var(--blue)">${i+1}.</span> ${s}</li>`).join('');
+}
+
+// ── Compare ────────────────────────────────────────────
+async function doCompare(){
+  if(cmpFiles.length<2){showErr('err-cmp','Adaugă minim 2 CV-uri.');return;}
+  $('btn-cmp').disabled=true;$('btn-cmp').textContent='[ se compară... ]';
+  hide('err-cmp');show('ld-cmp');hide('res-cmp');
+  try{
+    const r=await api('/api/compare',{cvs:cmpFiles});
+    renderCompare(r);show('res-cmp');
+    if(window.innerWidth>800)$('grid-cmp').style.gridTemplateColumns='360px 1fr';
+  }catch(e){showErr('err-cmp',e.message);}
+  finally{hide('ld-cmp');$('btn-cmp').disabled=false;$('btn-cmp').textContent=`[ compară ${cmpFiles.length} cv-uri ]`;}
+}
+
+function renderCompare(r){
+  $('cmp-win-name').textContent=r.castigator||'-';
+  $('cmp-win-mot').textContent=(r.motiv||'')+' '+(r.comparatie||'');
+  const medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
+  const colors=['var(--accent)','var(--blue)','var(--purple)','var(--muted)','var(--muted)'];
+  const sorted=[...(r.candidati||[])].sort((a,b)=>a.rank-b.rank);
+  $('cmp-cards').innerHTML=sorted.map((c,i)=>`
+    <div class="cand-card" style="border-left:4px solid ${colors[i]}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:20px">${medals[i]}</span>
+          <div><div style="font-size:13px;font-weight:700;color:#fff">${c.nume||''}</div>
+          <div style="font-size:10px;margin-top:2px;color:${colors[i]}">${c.titlu||''}</div></div>
+        </div>
+        <div style="text-align:right"><div style="font-size:24px;font-weight:900;color:${colors[i]};font-family:Georgia,serif;line-height:1">${c.scor}</div>
+        <div style="font-size:9px;color:#444">/100</div></div>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${c.scor}%;background:${colors[i]}"></div></div>
+      <div style="font-size:10px;color:#777;line-height:1.5;margin-bottom:7px">${c.rezumat||''}</div>
+      <div class="tags">${(c.skillsTop||[]).map(s=>`<span class="tag" style="background:${colors[i]}15;border:1px solid ${colors[i]}30;color:${colors[i]};font-size:10px">${s}</span>`).join('')}</div>
+      <div style="font-size:10px;color:#555;font-style:italic;margin-top:6px">"${c.recomandare||''}"</div>
+    </div>`).join('');
+}
+
+// ── Improve ────────────────────────────────────────────
+async function doImprove(){
+  const text=$('imp-text').value.trim();
+  if(!text){showErr('err-imp','Adaugă un CV.');return;}
+  $('btn-imp').disabled=true;$('btn-imp').textContent='[ se analizează... ]';
+  hide('err-imp');show('ld-imp');hide('res-imp');
+  try{
+    const r=await api('/api/improve',{cv_text:text});
+    renderImprove(r);show('res-imp');
+    if(window.innerWidth>800)$('grid-imp').style.gridTemplateColumns='360px 1fr';
+  }catch(e){showErr('err-imp',e.message);}
+  finally{hide('ld-imp');$('btn-imp').disabled=false;$('btn-imp').textContent='[ generează sugestii ]';}
+}
+
+function renderImprove(r){
+  $('imp-cur').textContent=r.scorCurent||0;
+  $('imp-est').textContent=r.scorEstimat||0;
+  $('imp-rez').textContent=r.rezumatProbleme||'';
+  const priColors=['var(--red)','var(--yellow)','var(--yellow)','var(--blue)','var(--muted)'];
+  $('imp-top5').innerHTML=(r.topImbunatatiri||[]).map((t,i)=>`
+    <div class="imp-action">
+      <div class="imp-pri" style="background:${priColors[i]}20;color:${priColors[i]};border:1px solid ${priColors[i]}40">${t.prioritate}</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700;color:#ddd;margin-bottom:4px">${t.actiune||''}</div>
+        <div style="font-size:11px;color:#777;line-height:1.6;margin-bottom:4px">${t.detaliu||''}</div>
+        <span class="tag ty" style="font-size:10px">${t.impactScor||''}</span>
+      </div>
+    </div>`).join('');
+  const impactColor={Ridicat:'var(--red)',Mediu:'var(--yellow)',Scazut:'var(--blue)'};
+  const sect=r.sectiuni||{};
+  $('imp-sect').innerHTML=Object.entries(sect).map(([k,v])=>{
+    const ic=impactColor[v.impact]||'var(--muted)';
+    return`<div class="card" style="margin-bottom:6px;border-left:3px solid ${ic}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div style="font-size:11px;font-weight:700;color:#ccc;text-transform:capitalize">${k.replace(/([A-Z])/g,' $1').trim()}</div>
+        <span class="tag" style="background:${ic}15;border:1px solid ${ic}40;color:${ic};font-size:9px">${v.impact||''}</span>
+      </div>
+      <div style="font-size:10px;color:var(--red);margin-bottom:5px">Problemă: ${v.problema||''}</div>
+      <div style="font-size:10px;color:var(--accent);line-height:1.6">✓ ${v.solutie||''}</div>
+    </div>`;}).join('');
+  $('imp-kw').innerHTML=(r.keywordsLipsa||[]).map(k=>`<span class="tag tp">${k}</span>`).join('');
+  $('imp-fmt').innerHTML=(r.formatareSugestii||[]).map(s=>`<li><span style="color:var(--blue)">›</span> ${s}</li>`).join('');
+}
+
+// ── Cover Letter ───────────────────────────────────────
+function clearClCv(){clCvText='';$('cl-cv-t').value='';hide('cl-loaded');show('cl-input');}
+function setLang(btn,lang){
+  clLang=lang;
+  document.querySelectorAll('.lang-btn[id^="lb-"]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function doCoverLetter(){
+  const cv=$('cl-cv-t').value.trim()||clCvText;
+  if(!cv){showErr('err-cl','Adaugă un CV.');return;}
+  $('btn-cl').disabled=true;$('btn-cl').textContent='[ se generează... ]';
+  hide('err-cl');show('ld-cl');hide('res-cl');
+  try{
+    const r=await api('/api/coverletter',{cv_text:cv,job_text:$('cl-job-t').value.trim(),limba:clLang});
+    $('cl-sub').textContent=r.subiectEmail||'-';
+    $('cl-letter').textContent=r.scrisoare||'-';
+    $('cl-sfat').innerHTML=(r.sfaturi||[]).map(s=>`<li><span style="color:var(--blue)">›</span> ${s}</li>`).join('');
+    $('cl-pct').innerHTML=(r.puncteCheie||[]).map(p=>`<li><span style="color:var(--accent)">✓</span> ${p}</li>`).join('');
+    show('res-cl');
+    if(window.innerWidth>800)$('grid-cl').style.gridTemplateColumns='360px 1fr';
+  }catch(e){showErr('err-cl',e.message);}
+  finally{hide('ld-cl');$('btn-cl').disabled=false;$('btn-cl').textContent='[ generează scrisoare ]';}
+}
+
+// ── Translate ──────────────────────────────────────────
+function setTrLang(btn,lang){
+  trLang=lang;
+  document.querySelectorAll('.lang-btn[id^="tl-"]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function doTranslate(){
+  const text=$('tr-text').value.trim()||trCvText;
+  if(!text){showErr('err-tr','Adaugă un CV.');return;}
+  $('btn-tr').disabled=true;$('btn-tr').textContent='[ se traduce... ]';
+  hide('err-tr');show('ld-tr');hide('res-tr');
+  try{
+    const r=await api('/api/translate',{cv_text:text,limba:trLang});
+    $('tr-result').textContent=r.cvTradus||'-';
+    $('tr-tips').innerHTML=(r.tipsLocalizare||[]).map(t=>`<li><span style="color:var(--accent)">›</span> ${t}</li>`).join('');
+    $('tr-terms').innerHTML=(r.termeniAdaptati||[]).map(t=>`<div style="margin-bottom:4px"><span style="color:#ccc">${t.original}</span> → <span style="color:var(--accent)">${t.tradus}</span>${t.nota?` <span style="color:#444">(${t.nota})</span>`:''}</div>`).join('');
+    show('res-tr');
+    if(window.innerWidth>800)$('grid-tr').style.gridTemplateColumns='360px 1fr';
+  }catch(e){showErr('err-tr',e.message);}
+  finally{hide('ld-tr');$('btn-tr').disabled=false;$('btn-tr').textContent='[ traduce cv ]';}
+}
+
+// ── Matching Auto ──────────────────────────────────────
+async function doMatching(){
+  const validJobs=matJobs.filter(j=>j.title.trim()||j.text.trim());
+  if(matCvFiles.length<1||validJobs.length<1){showErr('err-mat','Adaugă minim 1 CV și 1 job.');return;}
+  $('btn-mat').disabled=true;$('btn-mat').textContent='[ se calculează... ]';
+  hide('err-mat');show('ld-mat');hide('res-mat');
+  try{
+    const r=await api('/api/matching',{cvs:matCvFiles,jobs:validJobs});
+    renderMatching(r,validJobs);show('res-mat');
+    if(window.innerWidth>800)$('grid-mat').style.gridTemplateColumns='360px 1fr';
+  }catch(e){showErr('err-mat',e.message);}
+  finally{hide('ld-mat');$('btn-mat').disabled=false;updateMatBtn();}
+}
+
+function renderMatching(r,jobs){
+  $('mat-rez').textContent=r.rezumat||'-';
+  const colors=['var(--accent)','var(--blue)','var(--purple)','var(--yellow)','var(--muted)'];
+  $('mat-best').innerHTML=(r.bestMatchuri||[]).map((b,i)=>`
+    <div class="card" style="border-left:3px solid ${colors[i]};margin-bottom:7px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-size:11px;font-weight:700;color:#ddd">🎯 ${b.jobTitlu||''}</div>
+        <span class="score-chip" style="background:${colors[i]}18;color:${colors[i]};border:1px solid ${colors[i]}40">${b.scor}/100</span>
+      </div>
+      <div style="font-size:11px;color:${colors[i]};font-weight:700">👤 ${b.candidatOptim||''}</div>
+      <div style="font-size:10px;color:#666;margin-top:3px;line-height:1.5">${b.motiv||''}</div>
+    </div>`).join('');
+  const tbody=$('mat-rows');
+  tbody.innerHTML=(r.matches||[]).map(m=>{
+    const col=scoreColor(m.scor);
+    return`<tr>
+      <td style="color:#ccc;font-weight:600">${m.cvNume||''}</td>
+      <td style="color:var(--blue)">${m.jobTitlu||''}</td>
+      <td><span class="score-chip" style="background:${col}18;color:${col};border:1px solid ${col}40">${m.scor}</span></td>
+      <td style="color:#888">${m.verdict||''}</td>
+      <td style="color:#555;font-size:10px">${m.recomandare||''}</td>
+    </tr>`;}).join('');
+}
+
+// ── Export PDF ─────────────────────────────────────────
+async function exportPDF(){
+  if(!lastResult)return;
+  if(!window.jspdf){
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=doExport;document.head.appendChild(s);
+  }else doExport();
+}
+function doExport(){
+  const r=lastResult;
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,ML=18,TW=W-ML*2;let y=20;
+  const fix=str=>String(str||'').replace(/ă/g,'a').replace(/â/g,'a').replace(/î/g,'i').replace(/ș|ţ/g,'t').replace(/ș|ş/g,'s').replace(/[^\x00-\x7F]/g,'?');
+  const chk=n=>{if(y+n>275){doc.addPage();y=20;}};
+  const secH=t=>{chk(14);doc.setFillColor(240,245,250);doc.rect(ML,y-4,TW,10,'F');
+    doc.setFillColor(0,229,160);doc.rect(ML,y-4,3,10,'F');
+    doc.setTextColor(30,30,50);doc.setFontSize(9);doc.setFont('helvetica','bold');
+    doc.text(fix(t).toUpperCase(),ML+7,y+2);y+=10;};
+  const body=(t,indent=0)=>{chk(7);doc.setTextColor(60,60,80);doc.setFontSize(9);doc.setFont('helvetica','normal');
+    const lines=doc.splitTextToSize(fix(t),TW-indent);doc.text(lines,ML+indent,y);y+=lines.length*5+2;};
+  doc.setFillColor(15,15,25);doc.rect(0,0,W,42,'F');
+  doc.setFillColor(0,229,160);doc.rect(0,0,5,42,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(20);doc.setFont('helvetica','bold');
+  doc.text(fix(r.nume)||'Candidat',ML+4,16);
+  doc.setFontSize(10);doc.setTextColor(0,229,160);doc.setFont('helvetica','normal');
+  doc.text(fix(r.titlu)||'',ML+4,24);
+  const sc=r.scorGeneral||0;
+  doc.setFillColor(0,229,160);doc.roundedRect(W-ML-22,8,22,16,2,2,'F');
+  doc.setFontSize(14);doc.setTextColor(10,10,20);doc.setFont('helvetica','bold');
+  doc.text(String(sc),W-ML-11,19,{align:'center'});
+  doc.setFontSize(6);doc.text('SCOR',W-ML-11,23,{align:'center'});
+  doc.setFontSize(7);doc.setTextColor(80,80,100);doc.setFont('helvetica','normal');
+  doc.text('CV.Scanner | '+new Date().toLocaleDateString('ro-RO'),ML+4,39);
+  y=52;
+  secH('Profil Profesional');y+=2;body(r.rezumat||'');y+=4;
+  if(r.skills?.length){secH('Skills');y+=2;
+    $('sc-cats')&&(y+=0);
+    body((r.skills||[]).join(' · '));y+=4;}
+  if(r.experienta?.length){secH('Experienta');y+=2;
+    r.experienta.forEach((e,i)=>{chk(18);
+      doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(30,30,50);doc.text(fix(e.rol)||'',ML+2,y);y+=5;
+      doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(0,160,120);
+      doc.text([fix(e.companie),fix(e.perioada)].filter(Boolean).join('  •  '),ML+2,y);y+=5;
+      if(e.descriere){doc.setTextColor(100,100,120);const l=doc.splitTextToSize(fix(e.descriere),TW-4);doc.text(l,ML+2,y);y+=l.length*4.5;}
+      if(i<r.experienta.length-1){doc.setDrawColor(220,225,230);doc.line(ML,y+2,ML+TW,y+2);y+=6;}else{y+=4;}
+    });}
+  secH('Recomandare HR');y+=2;body(r.recomandare||'');
+  const total=doc.internal.getNumberOfPages();
+  for(let p=1;p<=total;p++){doc.setPage(p);doc.setFillColor(245,247,250);doc.rect(0,285,W,12,'F');
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(140,150,165);
+    doc.text('CV.Scanner — Claude AI',ML,291);doc.text(`Pagina ${p}/${total}`,W-ML,291,{align:'right'});}
+  const blob=doc.output('blob'),url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`Analiza_${fix(r.nume||'CV').replace(/\s+/g,'_')}.pdf`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+</script>
+</body>
+</html>
