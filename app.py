@@ -32,9 +32,18 @@ def call_claude_raw(prompt, max_tokens=2000):
         "max_tokens": max_tokens,
         "messages": [{"role": "user", "content": prompt}]
     }
-    resp = requests.post(CLAUDE_API_URL, headers=HEADERS, json=payload, timeout=120)
-    resp.raise_for_status()
-    return resp.json()["content"][0]["text"]
+    try:
+        resp = requests.post(CLAUDE_API_URL, headers=HEADERS, json=payload, timeout=120)
+        resp.raise_for_status()
+        data = resp.json()
+        return data["content"][0]["text"]
+    except requests.exceptions.Timeout:
+        return '{"error": "Timeout - cererea a durat prea mult. Incearca din nou."}'
+    except requests.exceptions.HTTPError as e:
+        return f'{{"error": "Eroare API Claude: {e}"}}'
+    except Exception as e:
+        print(f"[ERROR] call_claude_raw: {e}")
+        return '{"error": "Eroare necunoscuta. Incearca din nou."}'
 
 def call_claude(system_prompt, user_text, max_tokens=2000):
     prompt = f"{system_prompt}\n\nCV:\n{user_text}"
@@ -44,21 +53,25 @@ def call_claude(system_prompt, user_text, max_tokens=2000):
 def parse_json(text):
     """Extrage JSON din raspunsul Claude."""
     import re
+    if not text:
+        return {"error": "Raspuns gol de la AI."}
     text = text.strip()
-    # Remove markdown fences if present
+    # Remove markdown fences
     text = re.sub(r'^```(?:json)?\s*', '', text)
     text = re.sub(r'\s*```$', '', text)
+    text = text.strip()
     try:
         return json.loads(text)
     except Exception:
-        # Try to find JSON object
+        # Try to find JSON object in text
         m = re.search(r'\{.*\}', text, re.DOTALL)
         if m:
             try:
                 return json.loads(m.group())
             except Exception:
                 pass
-    return {"error": "Nu am putut extrage JSON din raspunsul Claude."}
+    print(f"[WARN] Could not parse JSON. Raw text (first 500): {text[:500]}")
+    return {"error": "Nu am putut extrage JSON. Incearca din nou."}
 
 
 # ── Prompts ───────────────────────────────────────────────
