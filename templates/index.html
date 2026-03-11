@@ -721,9 +721,13 @@ function updateMatBtn(){
 // ── API — returnează direct JSON de la backend ──────────
 async function api(endpoint,body){
   const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const ct=res.headers.get('content-type')||'';
+  if(!ct.includes('application/json')){
+    // Server a returnat HTML (eroare 500 etc)
+    throw new Error('Eroare server '+res.status+'. Verifică că CLAUDE_API_KEY e setat corect pe Render.');
+  }
   const data=await res.json();
-  if(!res.ok)throw new Error(data.error||'Eroare server '+res.status);
-  if(data.error)throw new Error(data.error);
+  if(!res.ok||data.error)throw new Error(data.error||'Eroare server '+res.status);
   return data;
 }
 

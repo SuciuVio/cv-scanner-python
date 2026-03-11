@@ -180,13 +180,17 @@ def coverletter():
 
 @app.route('/api/translate', methods=['POST'])
 def translate():
-    data = request.json or {}
-    cv_text = data.get('cv_text','')
-    target_lang = data.get('target_lang','engleza')
-    if not cv_text: return jsonify({'error':'CV gol'}),400
-    prompt = TRANSLATE_PROMPT.replace('{{LIMBA}}', target_lang)
-    result = call_claude(prompt, cv_text, max_tokens=3000)
-    return jsonify(result)
+    try:
+        data = request.json or {}
+        cv_text = data.get('cv_text','')
+        target_lang = data.get('target_lang','engleza')
+        if not cv_text: return jsonify({'error':'CV gol'}),400
+        prompt = TRANSLATE_PROMPT.replace('{{LIMBA}}', target_lang)
+        result = call_claude(prompt, cv_text, max_tokens=3000)
+        return jsonify(result)
+    except Exception as e:
+        print(f'[ERROR] /api/translate: {e}')
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/matching', methods=['POST'])
 def matching():
@@ -217,6 +221,17 @@ def share_get(share_id):
 @app.route('/api/health')
 def health():
     return jsonify({'status':'ok'})
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    print(f'[ERROR] Unhandled exception: {e}')
+    import traceback
+    traceback.print_exc()
+    return jsonify({'error': str(e)}), 500
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({'error': 'Ruta nu există'}), 404
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
