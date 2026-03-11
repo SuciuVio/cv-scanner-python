@@ -173,7 +173,7 @@
     <div class="logo">
       <div class="logo-tag">sistem analiză · python + flask + claude ai</div>
       <h1>CV<span>.</span>scanner</h1>
-      <p>analiză · job match · comparare · îmbunătățire · scrisoare · traducere · matching</p>
+      <p>analiză · job match · comparare · îmbunătățire · scrisoare · matching</p>
     </div>
     <div id="scoreBadge" class="score-badge">
       <div class="sn" id="badgeNum">0</div>
@@ -187,7 +187,6 @@
     <button class="mode-tab" onclick="setMode('comparare')">⚖️ Comparare</button>
     <button class="mode-tab" onclick="setMode('improve')">✨ Îmbunătățire</button>
     <button class="mode-tab" onclick="setMode('coverletter')">✉️ Scrisoare</button>
-    <button class="mode-tab" onclick="setMode('translate')">🌍 Traducere</button>
     <button class="mode-tab" onclick="setMode('matching')">🔀 Matching Auto</button>
   </div>
 
@@ -469,52 +468,6 @@
     </div>
   </div>
 
-  <!-- PANEL: Traducere -->
-  <div class="panel" id="panel-translate">
-    <div class="two-col" id="grid-tr">
-      <div>
-        <div class="clabel ca" style="margin-bottom:8px">// cv-ul de tradus</div>
-        <div class="upload-zone" id="dz-tr" onclick="triggerFile('ftr')"
-             ondragover="onDrag(event,'dz-tr',true)" ondragleave="onDrag(event,'dz-tr',false)" ondrop="onDrop(event,'dz-tr','trcv')">
-          <div class="icon" id="dz-tr-icon">📁</div>
-          <div class="lbl" id="dz-tr-lbl">drag & drop sau click</div>
-          <div class="sub"><span style="color:var(--red)">PDF</span> · <span style="color:var(--yellow)">TXT</span></div>
-        </div>
-        <input type="file" id="ftr" accept=".pdf,.txt" style="display:none" onchange="fileIn(this,'trcv')">
-        <div class="div-or"><hr/><span>sau lipește text</span><hr/></div>
-        <textarea class="h160" id="tr-text" placeholder="lipește CV-ul de tradus..."></textarea>
-        <div class="clabel cm" style="margin:10px 0 6px">// limba țintă</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="lang-btn active" id="tl-en" onclick="setTrLang(this,'engleza')">🇬🇧 Engleză</button>
-          <button class="lang-btn" id="tl-fr" onclick="setTrLang(this,'franceza')">🇫🇷 Franceză</button>
-          <button class="lang-btn" id="tl-de" onclick="setTrLang(this,'germana')">🇩🇪 Germană</button>
-          <button class="lang-btn" id="tl-ro" onclick="setTrLang(this,'romana')">🇷🇴 Română</button>
-        </div>
-        <button class="btn btn-g" id="btn-tr" onclick="doTranslate()" style="margin-top:12px">[ traduce cv ]</button>
-        <div class="err" id="err-tr"></div>
-        <div class="loading" id="ld-tr">
-          <div class="step">› analiză structură cv...</div>
-          <div class="step">› traducere secțiuni...</div>
-          <div class="step">› adaptare terminologie...</div>
-          <div class="step">› finalizare și formatare...</div>
-        </div>
-      </div>
-      <div id="res-tr" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div class="clabel ca">// cv tradus</div>
-          <button class="btn-sm" onclick="copyText('tr-result')" style="border-color:var(--accent);color:var(--accent)">📋 copiază tot</button>
-        </div>
-        <div class="tr-result" id="tr-result">-</div>
-        <div class="grid-2">
-          <div class="card"><div class="clabel ca">💡 tips localizare</div><ul class="blist" id="tr-tips"></ul></div>
-          <div class="card"><div class="clabel cb">🔄 termeni adaptați</div>
-            <div id="tr-terms" style="font-size:10px;color:var(--muted);line-height:1.8"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- PANEL: Matching Auto -->
   <div class="panel" id="panel-matching">
     <div class="two-col" id="grid-mat">
@@ -572,9 +525,9 @@
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-let cvTextMain='', jmCvText='', clCvText='', trCvText='';
+let cvTextMain='', jmCvText='', clCvText='';
 let cmpFiles=[], matCvFiles=[], matJobs=[];
-let clLang='romana', trLang='engleza';
+let clLang='romana';
 let lastResult=null, lastMode='analiza', analyzeScorGeneral=null;
 
 const $=id=>document.getElementById(id);
@@ -588,7 +541,7 @@ function triggerFile(id){$(id).click()}
 
 function setMode(mode){
   document.querySelectorAll('.mode-tab').forEach((t,i)=>{
-    t.classList.toggle('active',['analiza','jobmatch','comparare','improve','coverletter','translate','matching'][i]===mode);
+    t.classList.toggle('active',['analiza','jobmatch','comparare','improve','coverletter','matching'][i]===mode);
   });
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   $('panel-'+mode).classList.add('active');
@@ -980,28 +933,7 @@ async function doCoverLetter(){
   finally{hide('ld-cl');$('btn-cl').disabled=false;$('btn-cl').textContent='[ generează scrisoare ]';}
 }
 
-// ── Translate ──────────────────────────────────────────
-function setTrLang(btn,lang){
-  trLang=lang;
-  document.querySelectorAll('.lang-btn[id^="tl-"]').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
 
-async function doTranslate(){
-  const text=$('tr-text').value.trim()||trCvText;
-  if(!text){showErr('err-tr','Adaugă un CV.');return;}
-  $('btn-tr').disabled=true;$('btn-tr').textContent='[ se traduce... ]';
-  hide('err-tr');show('ld-tr');hide('res-tr');
-  try{
-    const r=await api('/api/translate',{cv_text:text,target_lang:trLang});
-    $('tr-result').textContent=r.cvTradus||'-';
-    $('tr-tips').innerHTML=(r.sfaturiAdaptare||r.tipsLocalizare||[]).map(t=>`<li><span style="color:var(--accent)">›</span> ${t}</li>`).join('');
-    $('tr-terms').innerHTML=(r.termeniAdaptati||[]).map(t=>`<div style="margin-bottom:4px"><span style="color:var(--text)">${t.original}</span> → <span style="color:var(--accent)">${t.tradus}</span>${t.nota?` <span style="color:var(--muted)">(${t.nota})</span>`:''}</div>`).join('');
-    show('res-tr');
-    if(window.innerWidth>800)$('grid-tr').style.gridTemplateColumns='360px 1fr';
-  }catch(e){showErr('err-tr',e.message);}
-  finally{hide('ld-tr');$('btn-tr').disabled=false;$('btn-tr').textContent='[ traduce cv ]';}
-}
 
 // ── Matching Auto ──────────────────────────────────────
 async function doMatching(){

@@ -110,9 +110,7 @@ COVER_LETTER_PROMPT = """Esti un expert in redactarea scrisorilor de intentie. P
 {"subiectEmail":"string - subiectul emailului gata de trimis","scrisoare":"textul complet al scrisorii de intentie, profesional si personalizat, 3-4 paragrafe"}
 Raspunde DOAR cu JSON."""
 
-TRANSLATE_PROMPT = """Esti un expert in traducerea si adaptarea CV-urilor pentru piete internationale. Traduce CV-ul in {{LIMBA}} si returneaza STRICT JSON valid (fara markdown):
-{"cvTradus":"textul complet al CV-ului tradus si adaptat cultural","sfaturiAdaptare":["sfat specific pentru piata din tara tinta 1","sfat 2","sfat 3"],"termeniAdaptati":[{"original":"termen original","tradus":"termen tradus/adaptat","nota":"explicatie daca e necesar"}]}
-Raspunde DOAR cu JSON."""
+
 
 MATCHING_PROMPT = """Esti un expert HR. Analizeaza toate CV-urile si joburile si calculeaza compatibilitatea fiecarei combinatii. Returneaza STRICT JSON valid (fara markdown):
 {"rezumat":"1-2 fraze despre rezultatele generale","bestMatchuri":[{"jobTitlu":"string","candidatOptim":"string","scor":85,"motiv":"1-2 fraze"}],"matches":[{"cvNume":"string","jobTitlu":"string","scor":78,"verdict":"string","skillsMatch":["skill1","skill2"],"skillsLipsa":["skill3"],"recomandare":"string"}]}
@@ -178,21 +176,7 @@ def coverletter():
     result = call_claude(prompt, cv_text, max_tokens=2000)
     return jsonify(result)
 
-@app.route('/api/translate', methods=['POST'])
-def translate():
-    try:
-        data = request.json or {}
-        cv_text = data.get('cv_text','')
-        target_lang = data.get('target_lang','engleza')
-        if not cv_text: return jsonify({'error':'CV gol'}),400
-        # Limitam textul la 8000 caractere pentru a evita timeout
-        cv_text = cv_text[:8000]
-        prompt = TRANSLATE_PROMPT.replace('{{LIMBA}}', target_lang)
-        result = call_claude(prompt, cv_text, max_tokens=3000)
-        return jsonify(result)
-    except Exception as e:
-        print(f'[ERROR] /api/translate: {e}')
-        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/matching', methods=['POST'])
 def matching():
