@@ -393,7 +393,7 @@
         <div class="clabel cy" style="margin-bottom:10px">// plan de îmbunătățire</div>
         <div class="imp-score-box">
           <div style="text-align:center">
-            <div style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">scor actual</div>
+            <div style="font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">scor actual <span id="imp-src-badge" style="display:none;font-size:8px;background:rgba(37,99,235,.12);color:var(--accent);border-radius:10px;padding:1px 6px;letter-spacing:0;text-transform:none;font-weight:600">din Analiză</span></div>
             <div class="imp-score-num" style="color:var(--red)" id="imp-cur">0</div>
           </div>
           <div style="font-size:24px;color:var(--muted)">→</div>
@@ -575,7 +575,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 let cvTextMain='', jmCvText='', clCvText='', trCvText='';
 let cmpFiles=[], matCvFiles=[], matJobs=[];
 let clLang='romana', trLang='engleza';
-let lastResult=null, lastMode='analiza';
+let lastResult=null, lastMode='analiza', analyzeScorGeneral=null;
 
 const $=id=>document.getElementById(id);
 const show=id=>{const e=$(id);if(e)e.style.display='block'};
@@ -592,6 +592,16 @@ function setMode(mode){
   });
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   $('panel-'+mode).classList.add('active');
+  // Auto-fill Îmbunătățire din Analiză dacă există rezultat
+  if(mode==='improve' && lastResult && lastMode==='analiza'){
+    const cvText=$('cv-text').value.trim()||cvTextMain;
+    if(cvText && !$('imp-text').value.trim()){
+      $('imp-text').value=cvText;
+      $('dz-imp-icon').textContent='📋';
+      $('dz-imp-lbl').textContent='CV preluat din Analiză';
+    }
+    analyzeScorGeneral=lastResult.scorGeneral||null;
+  }
 }
 
 function setRTab(btn,tabId){
@@ -909,8 +919,12 @@ async function doImprove(){
 }
 
 function renderImprove(r){
-  $('imp-cur').textContent=r.scorCurent||0;
+  // Folosește scorul din Analiză dacă e disponibil
+  const scorCurent=analyzeScorGeneral||r.scorCurent||0;
+  $('imp-cur').textContent=scorCurent;
+  $('imp-cur').style.color=scorCurent>=80?'var(--accent)':scorCurent>=60?'var(--yellow)':'var(--red)';
   $('imp-est').textContent=r.scorEstimat||0;
+  if(analyzeScorGeneral){$('imp-src-badge').style.display='inline';}else{$('imp-src-badge').style.display='none';}
   $('imp-rez').textContent=r.rezumatProbleme||'';
   const priColors=['var(--red)','var(--yellow)','var(--yellow)','var(--blue)','var(--muted)'];
   $('imp-top5').innerHTML=(r.topImbunatatiri||[]).map((t,i)=>`
