@@ -185,6 +185,8 @@ def translate():
         cv_text = data.get('cv_text','')
         target_lang = data.get('target_lang','engleza')
         if not cv_text: return jsonify({'error':'CV gol'}),400
+        # Limitam textul la 8000 caractere pentru a evita timeout
+        cv_text = cv_text[:8000]
         prompt = TRANSLATE_PROMPT.replace('{{LIMBA}}', target_lang)
         result = call_claude(prompt, cv_text, max_tokens=3000)
         return jsonify(result)
