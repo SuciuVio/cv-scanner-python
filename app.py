@@ -2,7 +2,7 @@ import os
 import json
 import uuid
 import requests
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -10,6 +10,19 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-schimba-in-productie')
+
+APP_USER     = os.getenv('APP_USER', 'admin')
+APP_PASSWORD = os.getenv('APP_PASSWORD', 'parola123')
+
+def login_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
 
 CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY")
 CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
@@ -43,7 +56,7 @@ def call_claude_raw(prompt, max_tokens=2000):
         return f'{{"error": "Eroare API Claude: {e}"}}'
     except Exception as e:
         print(f"[ERROR] call_claude_raw: {e}")
-        return '{"error": "Eroare necunoscuta. Incearca din nou."}'
+        return '{"error": "Eroare necunoscuta. Incearca din nou."}'  
 
 def call_claude(system_prompt, user_text, max_tokens=2000):
     prompt = f"{system_prompt}\n\nCV:\n{user_text}"
@@ -116,12 +129,32 @@ Raspunde DOAR cu JSON."""
 
 # ── Routes ────────────────────────────────────────────────
 
+@app.route('/login', methods=['GET','POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        user = request.form.get('username','')
+        pwd  = request.form.get('password','')
+        if user == APP_USER and pwd == APP_PASSWORD:
+            session['logged_in'] = True
+            return redirect(url_for('index'))
+        else:
+            error = 'Utilizator sau parolă incorecte.'
+    return render_template('login.html', error=error)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
 @app.route('/')
 @app.route('/share/<share_id>')
+@login_required
 def index(share_id=None):
     return render_template('index.html')
 
 @app.route('/api/analyze', methods=['POST'])
+@login_required
 def analyze():
     data = request.json or {}
     cv_text = data.get('cv_text','')
@@ -130,6 +163,7 @@ def analyze():
     return jsonify(result)
 
 @app.route('/api/jobmatch', methods=['POST'])
+@login_required
 def jobmatch():
     data = request.json or {}
     cv_text = data.get('cv_text','')
@@ -140,6 +174,7 @@ def jobmatch():
     return jsonify(parse_json(result))
 
 @app.route('/api/compare', methods=['POST'])
+@login_required
 def compare():
     data = request.json or {}
     cvs = data.get('cvs',[])
@@ -155,6 +190,7 @@ def compare():
     return jsonify(parse_json(result))
 
 @app.route('/api/matching', methods=['POST'])
+@login_required
 def matching():
     data = request.json or {}
     cvs = data.get('cvs',[])
@@ -168,6 +204,7 @@ def matching():
     return jsonify(parse_json(result))
 
 @app.route('/api/share', methods=['POST'])
+@login_required
 def share_save():
     data = request.json or {}
     share_id = str(uuid.uuid4())[:8]
@@ -175,12 +212,14 @@ def share_save():
     return jsonify({'share_id': share_id})
 
 @app.route('/api/share/<share_id>')
+@login_required
 def share_get(share_id):
     data = shared_analyses.get(share_id)
     if not data: return jsonify({'error':'Nu a fost gasit'}),404
     return jsonify(data)
 
 @app.route('/api/rejection', methods=['POST'])
+@login_required
 def rejection():
     try:
         data = request.json or {}
@@ -204,6 +243,7 @@ Raspunde DOAR cu JSON."""
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/health')
+@login_required
 def health():
     return jsonify({'status':'ok'})
 
