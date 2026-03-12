@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>CV Scanner — Powered by Claude AI</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    // Fallback dacă CDN-ul cloudflare nu răspunde
+    if(typeof pdfjsLib==='undefined'){
+      document.write('<script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"><\/script>');
+    }
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap');
     *{box-sizing:border-box;margin:0;padding:0}
@@ -579,7 +585,9 @@
 </div>
 
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+if(typeof pdfjsLib!=='undefined'){
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
 
 let cvTextMain='', jmCvText='';
 let cmpFiles=[], matCvFiles=[], matJobs=[];
@@ -625,6 +633,7 @@ function fileIn(inp,type){
 
 async function extractText(file){
   if(file.type==='application/pdf'){
+    if(typeof pdfjsLib==='undefined') throw new Error('PDF.js nu s-a încărcat — reîncarcă pagina sau folosește fișier TXT');
     const buf=await file.arrayBuffer();
     const pdf=await pdfjsLib.getDocument({data:buf}).promise;
     let t='';
