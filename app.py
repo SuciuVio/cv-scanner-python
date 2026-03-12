@@ -77,13 +77,20 @@ def parse_json(text):
 # ── Prompts ───────────────────────────────────────────────
 
 ANALYZE_PROMPT = """Esti un expert HR senior. Analizeaza CV-ul si returneaza STRICT JSON valid (fara markdown, fara backticks):
-{"nume":"string","titlu":"string","email":"string sau null","telefon":"string sau null","locatie":"string sau null","rezumat":"max 2 fraze scurte","puncteFoarte":["string","string","string"],"puncteSlabe":["string","string"],"experienta":[{"rol":"string","companie":"string","perioada":"string","descriere":"string scurt"}],"skills":["s1","s2","s3","s4","s5","s6"],"educatie":"string","limbi":["string"],"scorGeneral":82,"seniority":"Junior","limbaCv":"romana","industrie":"IT","mediaIndustrie":72,"comparatieIndustrie":"o fraza despre cum se compara candidatul cu media din industria sa","scoruri":{"skills":{"nota":80,"comentariu":"o fraza scurta"},"experienta":{"nota":85,"comentariu":"o fraza scurta"},"educatie":{"nota":75,"comentariu":"o fraza scurta"},"prezentare":{"nota":70,"comentariu":"o fraza scurta"}},"recomandare":"o fraza"}
+{"nume":"string","titlu":"string","email":"string sau null","telefon":"string sau null","locatie":"string sau null","rezumat":"max 2 fraze scurte","puncteFoarte":["string","string","string"],"puncteSlabe":["string","string"],"experienta":[{"rol":"string","companie":"string","perioada":"string","descriere":"string scurt"}],"skills":["s1","s2","s3","s4","s5","s6"],"educatie":"string","limbi":["string"],"scorGeneral":82,"seniority":"Junior","limbaCv":"romana","industrie":"IT","mediaIndustrie":72,"comparatieIndustrie":"o fraza despre cum se compara candidatul cu media din industria sa","scoruri":{"skills":{"nota":80,"comentariu":"o fraza scurta"},"experienta":{"nota":85,"comentariu":"o fraza scurta"},"educatie":{"nota":75,"comentariu":"o fraza scurta"},"prezentare":{"nota":70,"comentariu":"o fraza scurta"}},"recomandare":"o fraza","redFlags":["string"],"riscRetentie":{"nivel":"Scazut","scor":25,"motive":["motiv 1"],"recomandare":"string"},"scorHype":{"scor":60,"buzzwords":["passionate"],"realizariConcrete":["grew revenue 40%"],"verdict":"string"},"simulareATS":{"workday":{"scor":70,"probleme":["string"],"campuriRatate":["string"]},"greenhouse":{"scor":75,"probleme":["string"],"campuriRatate":["string"]},"bamboohr":{"scor":80,"probleme":["string"],"campuriRatate":["string"]},"recomandari":["string"]},"predictieSchimbare":{"luni":18,"interval":"14-22 luni","incredere":"Medie","rationale":"string","semne":["string"]},"costBeneficiu":{"salariuEstimat":{"minim":3000,"maxim":5000,"moneda":"EUR"},"timpOnboarding":"2-3 luni","timpProductivitate":"4-6 luni","riscAngajare":"Scazut","scoreROI":75,"sumar":"string"},"rezumatManager":["bullet 1","bullet 2","bullet 3"]}
 Campuri importante:
 - seniority: EXACT unul din: "Intern","Junior","Mid","Senior","Lead","Manager","Director","C-Level"
 - limbaCv: limba in care e scris CV-ul (romana/engleza/franceza/germana etc)
 - industrie: domeniul principal al candidatului (ex: IT, Marketing, Finance, HR, Engineering, Sales, etc)
 - mediaIndustrie: scorul mediu tipic pentru candidati din aceasta industrie (50-80)
 - comparatieIndustrie: 1-2 fraze despre cum se compara candidatul cu piata
+- redFlags: lista de probleme reale gasite: job hopping (sub 1 an la mai multe joburi), gaps inexplicabile (>6 luni), inconsistente in CV, lipsa progresie, descrieri vagi. Lista goala [] daca nu exista probleme.
+- riscRetentie: nivel EXACT unul din "Scazut","Mediu","Ridicat"; scor 0-100 (100=risc maxim); motive concrete; recomandare pentru angajator
+- scorHype: {"scor":0-100,"buzzwords":["cuvant gol 1"],"realizariConcrete":["realizare masurabil 1"],"verdict":"o fraza despre raportul hype/substanta"} — scor 0=tot hype, 100=tot substanta
+- simulareATS: {"workday":{"scor":0-100,"probleme":["problema 1"],"campuriRatate":["camp 1"]},"greenhouse":{"scor":0-100,"probleme":["problema 1"],"campuriRatate":["camp 1"]},"bamboohr":{"scor":0-100,"probleme":["problema 1"],"campuriRatate":["camp 1"]},"recomandari":["recomandare format 1"]}
+- predictieSchimbare: {"luni":18,"interval":"14-22 luni","incredere":"Medie","rationale":"explicatie bazata pe pattern joburi anterioare","semne":["semn 1","semn 2"]}
+- costBeneficiu: {"salariuEstimat":{"minim":3000,"maxim":5000,"moneda":"EUR"},"timpOnboarding":"2-3 luni","timpProductivitate":"4-6 luni","riscAngajare":"Scazut","scoreROI":75,"sumar":"o fraza despre valoarea angajarii"}
+- rezumatManager: ["bullet 1 — max 15 cuvinte","bullet 2 — max 15 cuvinte","bullet 3 — max 15 cuvinte"]
 Inlocuieste valorile de exemplu cu date reale din CV. Raspunde DOAR cu JSON-ul completat."""
 
 JOB_MATCH_PROMPT = """Esti un expert HR senior si consultant de cariera. Compara CV-ul cu descrierea jobului si returneaza STRICT JSON valid (fara markdown):
@@ -97,18 +104,6 @@ Raspunde DOAR cu JSON."""
 COMPARE_PROMPT = """Esti un expert HR. Compara urmatoarele CV-uri si returneaza STRICT JSON valid (fara markdown):
 {"castigator":"Nume Candidat","motivCastigator":"1-2 fraze","comparatie":"1-2 fraze despre diferente cheie","candidati":[{"nume":"string","titlu":"string","scor":85,"puncteFoarte":["string","string"],"puncteSlabe":["string"],"topSkills":["skill1","skill2","skill3"],"recomandare":"string"}]}
 Ordoneaza candidatii de la cel mai bun la cel mai slab. Raspunde DOAR cu JSON."""
-
-IMPROVE_PROMPT = """Esti un expert senior in optimizarea CV-urilor si recrutare. Analizeaza CV-ul si returneaza STRICT JSON valid (fara markdown):
-{"scorCurent":65,"scorEstimat":85,"scorATS":58,"rezumatProbleme":"1-2 fraze despre principalele probleme","topImbunatatiri":[{"prioritate":1,"actiune":"titlu scurt","detaliu":"explicatie detaliata","impactScor":"+8 puncte","durata":"2 zile","saptamana":1},{"prioritate":2,"actiune":"string","detaliu":"string","impactScor":"string","durata":"1 zi","saptamana":1},{"prioritate":3,"actiune":"string","detaliu":"string","impactScor":"string","durata":"3 zile","saptamana":2},{"prioritate":4,"actiune":"string","detaliu":"string","impactScor":"string","durata":"1 zi","saptamana":2},{"prioritate":5,"actiune":"string","detaliu":"string","impactScor":"string","durata":"2 zile","saptamana":3}],"sectiuni":{"titluProfesional":{"problema":"string","solutie":"string","impact":"Ridicat","versiuneRescrisa":"titlul rescris complet"},"rezumat":{"problema":"string","solutie":"string","impact":"Ridicat","versiuneRescrisa":"rezumatul rescris in 3-4 fraze"},"experienta":{"problema":"string","solutie":"string","impact":"Mediu","versiuneRescrisa":"exemplu descriere experienta imbunatatita"},"skills":{"problema":"string","solutie":"string","impact":"Mediu","versiuneRescrisa":"lista skills imbunatatita"},"prezentare":{"problema":"string","solutie":"string","impact":"Scazut","versiuneRescrisa":"sugestie prezentare"}},"keywordsLipsa":["kw1","kw2","kw3","kw4","kw5"],"formatareSugestii":["sugestie1","sugestie2","sugestie3"],"atsProbleme":["problema ATS 1","problema ATS 2"],"atsSfaturi":["sfat ATS 1","sfat ATS 2"]}
-- scorATS: 0-100 compatibilitate cu sisteme ATS - penalizeaza tabele, coloane, imagini, fonturi speciale, lipsa keywords
-- saptamana: 1, 2 sau 3 (planul de implementare pe 3 saptamani)
-- versiuneRescrisa: textul efectiv rescris gata de copiat (nu sfat)
-- atsProbleme: elemente care blocheaza parsarea ATS
-Fii specific si concret. Raspunde DOAR cu JSON."""
-
-COVER_LETTER_PROMPT = """Esti un expert in redactarea scrisorilor de intentie. Pe baza CV-ului de mai jos, genereaza o scrisoare de intentie profesionala in {{LIMBA}} si returneaza STRICT JSON valid (fara markdown):
-{"subiectEmail":"string - subiectul emailului gata de trimis","scrisoare":"textul complet al scrisorii de intentie, profesional si personalizat, 3-4 paragrafe"}
-Raspunde DOAR cu JSON."""
 
 
 
@@ -149,34 +144,15 @@ def compare():
     data = request.json or {}
     cvs = data.get('cvs',[])
     if len(cvs)<2: return jsonify({'error':'Minim 2 CV-uri'}),400
-    if len(cvs)>5: return jsonify({'error':'Maximum 5 CV-uri'}),400
-    cv_blocks = '\n\n'.join([f'CV {i+1} ({c.get("name","")}):\n{c.get("text","")}' for i,c in enumerate(cvs)])
+    if len(cvs)>50: return jsonify({'error':'Maximum 50 CV-uri'}),400
+    # Limiteaza textul fiecarui CV la 2000 caractere pentru CV-uri multe
+    max_chars = 2000 if len(cvs) > 20 else 3000
+    cv_blocks = '\n\n'.join([f'CV {i+1} ({c.get("name","")}):\n{c.get("text","")[:max_chars]}' for i,c in enumerate(cvs)])
     prompt = COMPARE_PROMPT + f'\n\n{cv_blocks}'
-    result = call_claude_raw(prompt, max_tokens=3000)
+    # Mai multe tokene pentru multe CV-uri
+    max_tok = min(4000 + len(cvs) * 200, 12000)
+    result = call_claude_raw(prompt, max_tokens=max_tok)
     return jsonify(parse_json(result))
-
-@app.route('/api/improve', methods=['POST'])
-def improve():
-    data = request.json or {}
-    cv_text = data.get('cv_text','')
-    if not cv_text: return jsonify({'error':'CV gol'}),400
-    result = call_claude(IMPROVE_PROMPT, cv_text, max_tokens=4000)
-    return jsonify(result)
-
-@app.route('/api/coverletter', methods=['POST'])
-def coverletter():
-    data = request.json or {}
-    cv_text = data.get('cv_text','')
-    job_text = data.get('job_text','')
-    limba = data.get('limba','romana')
-    if not cv_text: return jsonify({'error':'CV gol'}),400
-    prompt = COVER_LETTER_PROMPT.replace('{{LIMBA}}', limba)
-    if job_text:
-        prompt += f'\n\nDESCRIERE JOB (adapteaza scrisoarea la acest job):\n{job_text}'
-    result = call_claude(prompt, cv_text, max_tokens=2000)
-    return jsonify(result)
-
-
 
 @app.route('/api/matching', methods=['POST'])
 def matching():
@@ -203,6 +179,29 @@ def share_get(share_id):
     data = shared_analyses.get(share_id)
     if not data: return jsonify({'error':'Nu a fost gasit'}),404
     return jsonify(data)
+
+@app.route('/api/rejection', methods=['POST'])
+def rejection():
+    try:
+        data = request.json or {}
+        cv_text = data.get('cv_text', '')
+        job_text = data.get('job_text', '')
+        name = data.get('name', 'candidat')
+        if not cv_text: return jsonify({'error': 'CV gol'}), 400
+        prompt = f"""Esti un HR manager empatic. Scrie o scrisoare de respingere personalizata, umana si profesionala pentru candidatul {name}.
+Scrisoarea trebuie sa:
+1. Mentioneze 1-2 lucruri pozitive SPECIFICE din CV-ul lor
+2. Explice decizia fara sa fie vaga sau rece
+3. Incurajeze candidatul sa aplice in viitor daca e potrivit
+4. Fie in romana, max 150 cuvinte
+Returneaza STRICT JSON: {{"subiect":"string","scrisoare":"textul complet","tonEmpatic":true}}
+Job aplicat: {job_text[:500] if job_text else 'pozitie nedefinita'}
+Raspunde DOAR cu JSON."""
+        result = call_claude(prompt, cv_text[:4000], max_tokens=800)
+        return jsonify(result)
+    except Exception as e:
+        print(f'[ERROR] /api/rejection: {e}')
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/health')
 def health():
