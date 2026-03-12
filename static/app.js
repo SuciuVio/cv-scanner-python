@@ -1,3 +1,4 @@
+
 if(typeof pdfjsLib!=='undefined'){
   pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
@@ -23,7 +24,7 @@ function setMode(mode){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   $('panel-'+mode).classList.add('active');
   // Auto-fill Îmbunătățire din Analiză dacă există rezultat
-
+  
 }
 
 function setRTab(btn,tabId){
@@ -463,4 +464,329 @@ function exportCmpPDF(){
   const{jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const W=210,ML=18,TW=W-ML*2;let y=20;
-  const fix=str=>String(str||'').replace(/[ăâ]/g,'a').replace(/î/g,'i').replace(/[șşţț]/g,'s').replace(/[^
+  const fix=str=>String(str||'').replace(/[ăâ]/g,'a').replace(/î/g,'i').replace(/[șşţț]/g,'s').replace(/[^ -]/g,'?');
+  const chk=n=>{if(y+n>275){doc.addPage();y=20;}};
+
+  // Header
+  doc.setFillColor(15,23,42);doc.rect(0,0,W,38,'F');
+  doc.setFillColor(5,150,105);doc.rect(0,0,5,38,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(18);doc.setFont('helvetica','bold');
+  doc.text('SHORTLIST CANDIDATI',ML+4,15);
+  doc.setFontSize(9);doc.setTextColor(167,243,208);doc.setFont('helvetica','normal');
+  doc.text('Top 3 recomandati pentru interviu — CV.Scanner',ML+4,23);
+  doc.setFontSize(7);doc.setTextColor(100,116,139);
+  doc.text('Generat: '+new Date().toLocaleDateString('ro-RO'),ML+4,33);
+  y=48;
+
+  // Winner highlight
+  const w=(r.candidati||[])[0];
+  if(w){
+    doc.setFillColor(240,253,244);doc.rect(ML,y-4,TW,22,'F');
+    doc.setFillColor(5,150,105);doc.rect(ML,y-4,4,22,'F');
+    doc.setFontSize(8);doc.setTextColor(5,150,105);doc.setFont('helvetica','bold');
+    doc.text('CASTIGATOR',ML+8,y+2);
+    doc.setFontSize(13);doc.setTextColor(15,23,42);
+    doc.text(fix(w.nume||''),ML+8,y+9);
+    doc.setFontSize(8);doc.setTextColor(5,150,105);doc.setFont('helvetica','normal');
+    doc.text(fix(w.titlu||''),ML+8,y+15);
+    doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(5,150,105);
+    doc.text(String(w.scor||0),W-ML-8,y+10,{align:'right'});
+    doc.setFontSize(7);doc.setTextColor(100,116,139);
+    doc.text('/100',W-ML-8,y+15,{align:'right'});
+    y+=30;
+  }
+
+  // Top 3
+  const medals=['#1','#2','#3'];
+  const mcolors=[[5,150,105],[37,99,235],[124,58,237]];
+  (r.candidati||[]).slice(0,3).forEach((c,i)=>{
+    chk(35);
+    doc.setFillColor(248,250,252);doc.rect(ML,y-3,TW,32,'F');
+    doc.setFillColor(...mcolors[i]);doc.rect(ML,y-3,3,32,'F');
+    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...mcolors[i]);
+    doc.text(medals[i],ML+7,y+4);
+    doc.setTextColor(15,23,42);doc.setFontSize(11);
+    doc.text(fix(c.nume||''),ML+18,y+4);
+    doc.setFontSize(8);doc.setTextColor(100,116,139);doc.setFont('helvetica','normal');
+    doc.text(fix(c.titlu||''),ML+18,y+10);
+    doc.setFontSize(8);doc.setTextColor(...mcolors[i]);doc.setFont('helvetica','bold');
+    doc.text('Scor: '+String(c.scor||0),W-ML-5,y+4,{align:'right'});
+    doc.setFontSize(7.5);doc.setTextColor(60,60,80);doc.setFont('helvetica','normal');
+    const rec=doc.splitTextToSize(fix(c.recomandare||''),TW-25);
+    doc.text(rec.slice(0,2),ML+18,y+17);
+    if((c.topSkills||[]).length){
+      doc.setFontSize(7);doc.setTextColor(...mcolors[i]);
+      doc.text('Skills: '+fix((c.topSkills||[]).join(', ')),ML+18,y+26);
+    }
+    y+=37;
+  });
+
+  // Full ranking table
+  chk(20);y+=5;
+  doc.setFillColor(240,245,250);doc.rect(ML,y-4,TW,10,'F');
+  doc.setFillColor(37,99,235);doc.rect(ML,y-4,3,10,'F');
+  doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(30,30,50);
+  doc.text('RANKING COMPLET',ML+7,y+2);y+=12;
+  (r.candidati||[]).forEach((c,i)=>{
+    chk(8);
+    doc.setFontSize(8);doc.setFont('helvetica',i<3?'bold':'normal');
+    doc.setTextColor(i<3?15:80,i<3?23:80,i<3?42:80);
+    doc.text(`${i+1}. ${fix(c.nume||'')}`,ML+2,y);
+    doc.setTextColor(37,99,235);
+    doc.text(String(c.scor||0),W-ML-5,y,{align:'right'});
+    doc.setTextColor(150,150,150);doc.setFontSize(7);doc.setFont('helvetica','normal');
+    doc.text(fix(c.titlu||''),ML+35,y);
+    y+=7;
+  });
+
+  // Footer
+  const pages=doc.internal.getNumberOfPages();
+  for(let p=1;p<=pages;p++){
+    doc.setPage(p);doc.setFillColor(248,250,252);doc.rect(0,285,W,12,'F');
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(148,163,184);
+    doc.text('CV.Scanner — Shortlist Recrutare',ML,291);
+    doc.text(`Pagina ${p}/${pages}`,W-ML,291,{align:'right'});
+  }
+  doc.save(`Shortlist_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+// ── Matching Auto ──────────────────────────────────────
+async function doMatching(){
+  const validJobs=matJobs.filter(j=>j.title.trim()||j.text.trim());
+  if(matCvFiles.length<1||validJobs.length<1){showErr('err-mat','Adaugă minim 1 CV și 1 job.');return;}
+  $('btn-mat').disabled=true;$('btn-mat').textContent='[ se calculează... ]';
+  hide('err-mat');show('ld-mat');hide('res-mat');
+  try{
+    const r=await api('/api/matching',{cvs:matCvFiles,jobs:validJobs});
+    renderMatching(r,validJobs);show('res-mat');
+    if(window.innerWidth>800)$('grid-mat').style.gridTemplateColumns='360px 1fr';
+  }catch(e){showErr('err-mat',e.message);}
+  finally{hide('ld-mat');$('btn-mat').disabled=false;updateMatBtn();}
+}
+
+function renderMatching(r,jobs){
+  $('mat-rez').textContent=r.rezumat||'-';
+  const colors=['var(--accent)','var(--blue)','var(--purple)','var(--yellow)','var(--muted)'];
+  $('mat-best').innerHTML=(r.bestMatchuri||[]).map((b,i)=>`
+    <div class="card" style="border-left:3px solid ${colors[i]};margin-bottom:7px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-size:11px;font-weight:700;color:var(--text)">🎯 ${b.jobTitlu||''}</div>
+        <span class="score-chip" style="background:${colors[i]}18;color:${colors[i]};border:1px solid ${colors[i]}40">${b.scor}/100</span>
+      </div>
+      <div style="font-size:11px;color:${colors[i]};font-weight:700">👤 ${b.candidatOptim||''}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5">${b.motiv||''}</div>
+    </div>`).join('');
+  $('mat-rows').innerHTML=(r.matches||[]).map(m=>{
+    const col=scoreColor(m.scor);
+    return`<tr>
+      <td style="color:var(--text);font-weight:600">${m.cvNume||''}</td>
+      <td style="color:var(--blue)">${m.jobTitlu||''}</td>
+      <td><span class="score-chip" style="background:${col}18;color:${col};border:1px solid ${col}40">${m.scor}</span></td>
+      <td style="color:var(--muted)">${m.verdict||''}</td>
+      <td style="color:var(--muted);font-size:10px">${m.recomandare||''}</td>
+    </tr>`;}).join('');
+}
+
+// ── Blind Recruitment ─────────────────────────────────
+function toggleBlind(on){
+  blindMode=on;
+  const track=$('blind-track'),thumb=$('blind-thumb');
+  if(on){track.style.background='var(--purple)';thumb.style.left='20px';}
+  else{track.style.background='#cbd5e1';thumb.style.left='2px';}
+}
+
+// ── Render Insights ────────────────────────────────────
+function renderInsights(r){
+  const h=r.scorHype||{};
+  const hS=h.scor||0;
+  const hC=hS>=70?'var(--green)':hS>=40?'var(--yellow)':'var(--red)';
+  $('hype-scor').textContent=hS+'/100'; $('hype-scor').style.color=hC;
+  $('hype-bar').style.width=hS+'%'; $('hype-bar').style.background=hC;
+  $('hype-verdict').textContent=h.verdict||'';
+  $('hype-buzz').innerHTML=(h.buzzwords||[]).map(b=>`<span style="display:inline-block;padding:2px 7px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:12px;font-size:10px;color:var(--red);margin:2px">${b}</span>`).join('');
+  $('hype-real').innerHTML=(h.realizariConcrete||[]).map(b=>`<span style="display:inline-block;padding:2px 7px;background:rgba(5,150,105,.08);border:1px solid rgba(5,150,105,.2);border-radius:12px;font-size:10px;color:var(--green);margin:2px">${b}</span>`).join('');
+  const ats=r.simulareATS||{};
+  $('ats-scores').innerHTML=[['workday','Workday','var(--blue)'],['greenhouse','Greenhouse','var(--green)'],['bamboohr','BambooHR','var(--yellow)']].map(([k,name,col])=>{
+    const s=ats[k]||{};
+    return `<div style="flex:1;text-align:center;padding:10px 6px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)"><div style="font-size:18px;font-weight:900;color:${col}">${s.scor||0}</div><div style="font-size:8px;color:var(--muted);margin-top:2px">${name}</div>${(s.probleme||[]).slice(0,1).map(p=>`<div style="font-size:8px;color:var(--red);margin-top:3px;line-height:1.3">${p}</div>`).join('')}</div>`;
+  }).join('');
+  $('ats-recs').innerHTML=(ats.recomandari||[]).map(r=>`<div style="margin-bottom:4px"><span style="color:var(--blue)">› </span>${r}</div>`).join('');
+  const pred=r.predictieSchimbare||{};
+  $('pred-luni').textContent=pred.luni||'-';
+  $('pred-interval').textContent=pred.interval||'';
+  $('pred-incredere').textContent=pred.incredere||'';
+  $('pred-rationale').textContent=pred.rationale||'';
+  $('pred-semne').innerHTML=(pred.semne||[]).map(s=>`<li><span style="color:var(--purple)">› </span>${s}</li>`).join('');
+  const cb=r.costBeneficiu||{};
+  const sal=cb.salariuEstimat||{};
+  $('cb-salariu').textContent=sal.minim&&sal.maxim?`${sal.minim}-${sal.maxim} ${sal.moneda||'EUR'}`:'N/A';
+  $('cb-roi').textContent=(cb.scoreROI||0)+'/100';
+  $('cb-roi').style.color=(cb.scoreROI||0)>=70?'var(--green)':(cb.scoreROI||0)>=50?'var(--yellow)':'var(--red)';
+  $('cb-onboard').textContent=cb.timpOnboarding||'-';
+  $('cb-prod').textContent=cb.timpProductivitate||'-';
+  $('cb-sumar').textContent=cb.sumar||'';
+}
+
+function renderManager(r){
+  $('mgr-bullets').innerHTML=(r.rezumatManager||[]).map((b,i)=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:rgba(37,99,235,.05);border:1px solid rgba(37,99,235,.15);border-radius:8px;margin-bottom:6px"><span style="font-size:16px;flex-shrink:0">${['1️⃣','2️⃣','3️⃣'][i]||'•'}</span><span style="font-size:12px;color:var(--text);line-height:1.6">${b}</span></div>`).join('');
+}
+
+function copyManagerSummary(){
+  if(!lastResult) return;
+  const t=(lastResult.rezumatManager||[]).map((b,i)=>(i+1)+'. '+b).join('\n');
+
+  navigator.clipboard.writeText(`Candidat: ${lastResult.nume||''}
+
+`+t).then(()=>{event.target.textContent='✅ Copiat!';setTimeout(()=>event.target.textContent='📋 Copiază',2000);});
+}
+
+function emailManagerSummary(){
+  if(!lastResult) return;
+  const r=lastResult;
+  const sub='Candidat: '+(r.nume||'')+' — '+(r.titlu||'');
+  const bullets=(r.rezumatManager||[]).map((b,i)=>(i+1)+'. '+b).join('\n');
+  const bod='Buna ziua,\n\nCandidatura spre evaluare:\n\nNume: '+(r.nume||'-')+'\nScor: '+r.scorGeneral+'/100\nSeniority: '+(r.seniority||'-')+'\n\n'+bullets+'\n\nRisc retentie: '+((r.riscRetentie||{}).nivel||'-')+'\n\nCu stima,\nEchipa HR';
+  window.location.href='mailto:?subject='+encodeURIComponent(sub)+'&body='+encodeURIComponent(bod);
+}
+async function generateRejection(){
+  if(!lastResult){alert('Analizează un CV mai întâi.');return;}
+  const btn=$('btn-rejection');
+  btn.disabled=true;btn.textContent='[ se generează... ]';
+  hide('rej-result');
+  try{
+    const r=await api('/api/rejection',{cv_text:$('cv-text').value.trim()||cvTextMain,name:lastResult.nume||'candidat',job_text:$('rej-job').value.trim()});
+    lastRejection=r;
+    $('rej-subject').textContent=r.subiect||'';
+    $('rej-body').textContent=r.scrisoare||'';
+    show('rej-result');
+  }catch(e){alert('Eroare: '+e.message);}
+  finally{btn.disabled=false;btn.textContent='[ generează scrisoare respingere ]';}
+}
+
+function copyRejection(){
+  if(!lastRejection) return;
+  navigator.clipboard.writeText(lastRejection.scrisoare||'').then(()=>{event.target.textContent='✅ Copiat!';setTimeout(()=>event.target.textContent='📋 Copiază',2000);});
+}
+
+function emailRejection(){
+  if(!lastRejection) return;
+  window.location.href=`mailto:?subject=${encodeURIComponent(lastRejection.subiect||'')}&body=${encodeURIComponent(lastRejection.scrisoare||'')}`;
+}
+
+function detectDuplicates(files,texts){
+  const dups=[];
+  for(let i=0;i<texts.length;i++){
+    for(let j=i+1;j<texts.length;j++){
+      const a=texts[i].slice(0,300).toLowerCase().split(' ').filter(w=>w.length>4);
+      const b=new Set(texts[j].slice(0,300).toLowerCase().split(' ').filter(w=>w.length>4));
+      const common=a.filter(w=>b.has(w)).length;
+      const sim=common/Math.max(a.length,b.size,1);
+      if(sim>0.6) dups.push({i,j,sim:Math.round(sim*100),nameA:files[i].name,nameB:files[j].name});
+    }
+  }
+  return dups;
+}
+
+// ── Share pe Email ────────────────────────────────────
+function shareEmail(){
+  if(!lastResult) return;
+  const r=lastResult;
+  const flags=(r.redFlags||[]);
+  const ret=r.riscRetentie||{};
+  const subject=`Raport CV — ${r.nume||'Candidat'} | Scor: ${r.scorGeneral}/100`;
+  const body=`Buna ziua,
+
+Va trimit raportul de analiza CV generat cu CV.Scanner AI.
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+CANDIDAT: ${r.nume||'-'}
+TITLU: ${r.titlu||'-'}
+SCOR GENERAL: ${r.scorGeneral}/100
+SENIORITY: ${r.seniority||'-'}
+INDUSTRIE: ${r.industrie||'-'}
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+REZUMAT:
+${r.rezumat||'-'}
+
+PUNCTE FORTE:
+${(r.puncteFoarte||[]).map((p,i)=>`${i+1}. ${p}`).join('\n')}
+
+DE IMBUNATATIT:
+${(r.puncteSlabe||[]).map((p,i)=>`${i+1}. ${p}`).join('\n')}
+
+SKILLS: ${(r.skills||[]).join(', ')}
+
+${flags.length>0?`RED FLAGS DETECTATE (${flags.length}):\n${flags.map(f=>`⚠ ${f}`).join('\n')}\n`:'✅ Niciun red flag detectat\n'}
+${ret.nivel?`RISC RETENTIE: ${ret.nivel} (${ret.scor}/100)\n${(ret.motive||[]).map(m=>`- ${m}`).join('\n')}\n`:''}
+RECOMANDARE HR:
+"${r.recomandare||'-'}"
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+Generat cu CV.Scanner — Claude AI
+${window.location.origin}`;
+
+  const mailto=`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href=mailto;
+}
+
+// ── Export PDF ─────────────────────────────────────────
+async function exportPDF(){
+  if(!lastResult)return;
+  if(!window.jspdf){
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=doExport;document.head.appendChild(s);
+  }else doExport();
+}
+function doExport(){
+  const r=lastResult;
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,ML=18,TW=W-ML*2;let y=20;
+  const fix=str=>String(str||'').replace(/[ăâ]/g,'a').replace(/î/g,'i').replace(/[șşţț]/g,'s').replace(/[^\x00-\x7F]/g,'?');
+  const chk=n=>{if(y+n>275){doc.addPage();y=20;}};
+  const secH=t=>{chk(14);doc.setFillColor(240,245,250);doc.rect(ML,y-4,TW,10,'F');
+    doc.setFillColor(37,99,235);doc.rect(ML,y-4,3,10,'F');
+    doc.setTextColor(30,30,50);doc.setFontSize(9);doc.setFont('helvetica','bold');
+    doc.text(fix(t).toUpperCase(),ML+7,y+2);y+=10;};
+  doc.setFillColor(15,23,42);doc.rect(0,0,W,42,'F');
+  doc.setFillColor(37,99,235);doc.rect(0,0,5,42,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(20);doc.setFont('helvetica','bold');
+  doc.text(fix(r.nume)||'Candidat',ML+4,16);
+  doc.setFontSize(10);doc.setTextColor(147,197,253);doc.setFont('helvetica','normal');
+  doc.text(fix(r.titlu)||'',ML+4,24);
+  const sc=r.scorGeneral||0;
+  doc.setFillColor(37,99,235);doc.roundedRect(W-ML-22,8,22,16,2,2,'F');
+  doc.setFontSize(14);doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');
+  doc.text(String(sc),W-ML-11,19,{align:'center'});
+  doc.setFontSize(6);doc.text('SCOR',W-ML-11,23,{align:'center'});
+  doc.setFontSize(7);doc.setTextColor(100,116,139);doc.setFont('helvetica','normal');
+  doc.text('CV.Scanner | '+new Date().toLocaleDateString('ro-RO'),ML+4,39);
+  y=52;
+  secH('Profil Profesional');y+=2;
+  doc.setTextColor(60,60,80);doc.setFontSize(9);doc.setFont('helvetica','normal');
+  const rezLines=doc.splitTextToSize(fix(r.rezumat||''),TW);doc.text(rezLines,ML,y);y+=rezLines.length*5+6;
+  if(r.skills?.length){secH('Skills');y+=2;
+    doc.setTextColor(60,60,80);doc.setFontSize(9);doc.setFont('helvetica','normal');
+    const skLines=doc.splitTextToSize(fix((r.skills||[]).join(' · ')),TW);doc.text(skLines,ML,y);y+=skLines.length*5+6;}
+  if(r.experienta?.length){secH('Experienta');y+=2;
+    r.experienta.forEach((e,i)=>{chk(18);
+      doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(30,30,50);doc.text(fix(e.rol)||'',ML+2,y);y+=5;
+      doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(37,99,235);
+      doc.text([fix(e.companie),fix(e.perioada)].filter(Boolean).join('  •  '),ML+2,y);y+=5;
+      if(e.descriere){doc.setTextColor(100,100,120);const l=doc.splitTextToSize(fix(e.descriere),TW-4);doc.text(l,ML+2,y);y+=l.length*4.5;}
+      if(i<r.experienta.length-1){doc.setDrawColor(220,225,230);doc.line(ML,y+2,ML+TW,y+2);y+=6;}else{y+=4;}
+    });}
+  secH('Recomandare HR');y+=2;
+  doc.setTextColor(60,60,80);doc.setFontSize(9);doc.setFont('helvetica','italic');
+  const recLines=doc.splitTextToSize(fix(r.recomandare||''),TW);doc.text(recLines,ML,y);
+  const total=doc.internal.getNumberOfPages();
+  for(let p=1;p<=total;p++){doc.setPage(p);doc.setFillColor(248,250,252);doc.rect(0,285,W,12,'F');
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(148,163,184);
+    doc.text('CV.Scanner — Claude AI',ML,291);doc.text(`Pagina ${p}/${total}`,W-ML,291,{align:'right'});}
+  const blob=doc.output('blob'),url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`Analiza_${fix(r.nume||'CV').replace(/\s+/g,'_')}.pdf`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
