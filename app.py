@@ -43,6 +43,7 @@ def call_claude_raw(prompt, max_tokens=2000):
     payload = {
         "model": CLAUDE_MODEL,
         "max_tokens": max_tokens,
+        "temperature": 0,
         "messages": [{"role": "user", "content": prompt}]
     }
     try:
@@ -129,13 +130,21 @@ Raspunde DOAR cu JSON."""
 
 # ── Routes ────────────────────────────────────────────────
 
+@app.route('/demo')
+def landing():
+    return render_template('landing.html')
+
+@app.route('/landing')
+def landing():
+    return render_template('landing.html')
+
 @app.route('/login', methods=['GET','POST'])
 def login():
     error = None
     if request.method == 'POST':
         user = request.form.get('username','')
         pwd  = request.form.get('password','')
-        if user == APP_USER and pwd == APP_PASSWORD:
+        if user.strip() == APP_USER.strip() and pwd.strip() == APP_PASSWORD.strip():
             session['logged_in'] = True
             return redirect(url_for('index'))
         else:
