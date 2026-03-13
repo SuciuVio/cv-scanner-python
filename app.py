@@ -57,7 +57,7 @@ def call_claude_raw(prompt, max_tokens=2000):
         return f'{{"error": "Eroare API Claude: {e}"}}'
     except Exception as e:
         print(f"[ERROR] call_claude_raw: {e}")
-        return '{"error": "Eroare necunoscuta. Incearca din nou."}'  
+        return '{"error": "Eroare necunoscuta. Incearca din nou."}'
 
 def call_claude(system_prompt, user_text, max_tokens=2000):
     prompt = f"{system_prompt}\n\nCV:\n{user_text}"
@@ -130,7 +130,7 @@ Raspunde DOAR cu JSON."""
 
 # ── Routes ────────────────────────────────────────────────
 
-@app.route('/demo')
+@app.route('/landing')
 def landing():
     return render_template('landing.html')
 
