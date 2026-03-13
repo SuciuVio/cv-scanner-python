@@ -134,10 +134,6 @@ Raspunde DOAR cu JSON."""
 def landing():
     return render_template('landing.html')
 
-@app.route('/landing')
-def landing():
-    return render_template('landing.html')
-
 @app.route('/login', methods=['GET','POST'])
 def login():
     error = None
