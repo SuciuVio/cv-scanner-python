@@ -399,12 +399,7 @@ function renderCompare(r){
       <div class="tags" style="margin-top:8px">${(c.topSkills||[]).map(s=>`<span class="tag" style="background:${col(i)}15;border:1px solid ${col(i)}30;color:${col(i)};font-size:10px">${s}</span>`).join('')}</div>
       <div style="font-size:10px;color:var(--muted);font-style:italic;margin-top:6px">"${c.recomandare||''}"</div>
     </div>`).join('');
-  if(candidati.length>5){
-    const rest=candidati.length-5;
-    $('cmp-cards').innerHTML+=`<div style="text-align:center;padding:14px;color:var(--muted);font-size:12px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;cursor:pointer" onclick="showAllCmp(r)">
-      ↓ mai sunt <strong>${rest}</strong> candidați — click pentru a vedea toți
-    </div>`;
-  }
+
   window._lastCmpResult=r;
 }
 
@@ -438,13 +433,13 @@ function exportCmpExcel(){
   if(!XLSX){ const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=exportCmpExcel;document.head.appendChild(s);return; }
   const wb=XLSX.utils.book_new();
   // Sheet 1: Shortlist
-  const shortlist=(r.candidati||[]).slice(0,3).map((c,i)=>({
-    'Loc': i===0?'🥇 #1':i===1?'🥈 #2':'🥉 #3',
+  const shortlist=(r.candidati||[]).slice(0,5).map((c,i)=>({
+    'Loc': i===0?'#1 Aur':i===1?'#2 Argint':i===2?'#3 Bronz':i===3?'#4':'#5',
     'Nume': c.nume||'', 'Titlu': c.titlu||'',
     'Scor': c.scor||0, 'Recomandare': c.recomandare||'',
     'Status': 'Recomandat interviu'
   }));
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shortlist), 'Shortlist Top 3');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(shortlist), 'Shortlist Top 5');
   // Sheet 2: Ranking complet
   const ranking=(r.candidati||[]).map((c,i)=>({
     'Loc': `#${i+1}`, 'Nume': c.nume||'', 'Titlu': c.titlu||'',
