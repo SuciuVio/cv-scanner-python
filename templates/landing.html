@@ -6,145 +6,414 @@
   <title>CV Scanner AI — Recrutare inteligenta pentru agentii moderne</title>
   <meta name="description" content="Analizeaza 50 de CV-uri in 2 minute. Scoruri obiective, red flags automate, rapoarte PDF gata de trimis clientului."/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --bg:#0a0d14;--surface:#111520;--surface2:#161b2e;
-      --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
-      --accent:#3b6ef8;--accent2:#6b8ffb;--accent-glow:rgba(59,110,248,0.25);
-      --green:#10b981;--yellow:#f59e0b;--red:#ef4444;--purple:#8b5cf6;
-      --text:#f1f5f9;--muted:#94a3b8;--muted2:#64748b;
-      --font-d:'Syne',sans-serif;--font-b:'DM Sans',sans-serif;
+      --bg:#080b12;--s1:#0d1117;--s2:#111827;--s3:#1a2332;
+      --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
+      --blue:#3b82f6;--blue2:#60a5fa;--blue3:#93c5fd;
+      --cyan:#06b6d4;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
+      --text:#f0f6ff;--muted:#8b9ab5;--muted2:#4a5568;
+      --glow:rgba(59,130,246,0.2);--glow2:rgba(6,182,212,0.15);
+      --fd:'Bricolage Grotesque',sans-serif;--fm:'JetBrains Mono',monospace;
     }
     html{scroll-behavior:smooth}
-    body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:16px;line-height:1.6;overflow-x:hidden}
-    nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 48px;display:flex;align-items:center;justify-content:space-between;background:rgba(10,13,20,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
-    .nav-logo{font-family:var(--font-d);font-size:20px;font-weight:800;color:var(--text);text-decoration:none;letter-spacing:-0.5px}
-    .nav-logo span{color:var(--accent2)}
-    .nav-links{display:flex;gap:32px;align-items:center}
+    body{background:var(--bg);color:var(--text);font-family:var(--fd);font-size:16px;line-height:1.6;overflow-x:hidden}
+
+    /* MESH BACKGROUND */
+    body::before{
+      content:'';position:fixed;inset:0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 10%,rgba(59,130,246,0.08) 0%,transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%,rgba(6,182,212,0.06) 0%,transparent 60%),
+        radial-gradient(ellipse 40% 30% at 60% 40%,rgba(16,185,129,0.04) 0%,transparent 60%);
+      pointer-events:none;z-index:0;
+    }
+
+    /* GRID OVERLAY */
+    body::after{
+      content:'';position:fixed;inset:0;
+      background-image:
+        linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px);
+      background-size:60px 60px;
+      pointer-events:none;z-index:0;
+    }
+
+    section,nav,footer{position:relative;z-index:1}
+    .container{max-width:1120px;margin:0 auto;padding:0 48px}
+
+    /* ── NAV ── */
+    nav{
+      position:fixed;top:0;left:0;right:0;z-index:100;
+      padding:16px 48px;
+      display:flex;align-items:center;justify-content:space-between;
+      background:rgba(8,11,18,0.8);backdrop-filter:blur(24px);
+      border-bottom:1px solid var(--border);
+    }
+    .nav-logo{font-size:18px;font-weight:800;color:var(--text);text-decoration:none;letter-spacing:-0.5px;display:flex;align-items:center;gap:6px}
+    .nav-logo .dot{width:8px;height:8px;background:var(--blue);border-radius:50%;animation:blink 2s infinite}
+    @keyframes blink{0%,100%{opacity:1;box-shadow:0 0 0 0 var(--blue)}50%{opacity:0.6;box-shadow:0 0 0 4px rgba(59,130,246,0)}}
+    .nav-links{display:flex;gap:28px;align-items:center}
     .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
     .nav-links a:hover{color:var(--text)}
-    .nav-cta{background:var(--accent);color:#fff!important;padding:9px 22px;border-radius:8px;font-weight:600!important;font-size:13px!important;transition:background .2s,transform .1s!important}
-    .nav-cta:hover{background:var(--accent2)!important;transform:translateY(-1px)}
-    section{position:relative;z-index:1}
-    .container{max-width:1100px;margin:0 auto;padding:0 48px}
-    .hero{min-height:100vh;display:flex;align-items:center;padding:120px 0 80px;position:relative;overflow:hidden}
-    .hero-glow{position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(59,110,248,0.15) 0%,transparent 70%);top:-100px;left:-200px;pointer-events:none}
-    .hero-glow2{position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,0.1) 0%,transparent 70%);bottom:0;right:-100px;pointer-events:none}
-    .hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(59,110,248,0.1);border:1px solid rgba(59,110,248,0.3);border-radius:100px;padding:6px 16px;font-size:12px;font-weight:600;color:var(--accent2);letter-spacing:1px;text-transform:uppercase;margin-bottom:28px;animation:fadeUp .6s ease both}
-    .hero-tag::before{content:'●';font-size:8px;animation:pulse 2s infinite}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
-    h1{font-family:var(--font-d);font-size:clamp(42px,6vw,74px);font-weight:800;line-height:1.05;letter-spacing:-0.5px;margin-bottom:24px;animation:fadeUp .7s .1s ease both}
-    h1 em{font-style:normal;background:linear-gradient(135deg,var(--accent2),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .hero-sub{font-size:18px;font-weight:300;color:var(--muted);max-width:560px;line-height:1.7;margin-bottom:40px;animation:fadeUp .7s .2s ease both}
-    .hero-sub strong{color:var(--text);font-weight:500}
-    .hero-actions{display:flex;gap:16px;align-items:center;flex-wrap:wrap;animation:fadeUp .7s .3s ease both}
-    .btn-primary{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:#fff;padding:15px 32px;border-radius:10px;font-weight:600;font-size:15px;text-decoration:none;transition:all .2s;box-shadow:0 0 40px rgba(59,110,248,0.3)}
-    .btn-primary:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 0 60px rgba(59,110,248,0.4)}
-    .btn-secondary{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;font-weight:500;text-decoration:none;transition:color .2s}
-    .btn-secondary:hover{color:var(--text)}
-    .hero-stats{display:flex;gap:40px;margin-top:64px;flex-wrap:wrap;animation:fadeUp .7s .4s ease both}
-    .stat{border-left:2px solid var(--accent);padding-left:16px}
-    .stat-num{font-family:var(--font-d);font-size:32px;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px}
-    .stat-num span{color:var(--accent2)}
-    .stat-label{font-size:13px;color:var(--muted)}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .nav-cta{
+      background:linear-gradient(135deg,var(--blue),var(--cyan));
+      color:#fff!important;padding:9px 22px;border-radius:8px;
+      font-weight:700!important;font-size:13px!important;
+      transition:opacity .2s,transform .1s!important;letter-spacing:0.3px;
+    }
+    .nav-cta:hover{opacity:0.9!important;transform:translateY(-1px)}
+
+    /* ── HERO ── */
+    .hero{min-height:100vh;display:flex;align-items:center;padding:120px 0 80px}
+    .hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+    .hero-badge{
+      display:inline-flex;align-items:center;gap:8px;
+      background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);
+      border-radius:100px;padding:5px 14px;
+      font-size:11px;font-weight:700;color:var(--blue2);
+      letter-spacing:1.5px;text-transform:uppercase;margin-bottom:24px;
+      animation:fadeUp .6s ease both;
+    }
+    .hero-badge span{width:6px;height:6px;background:var(--blue);border-radius:50%;animation:blink 2s infinite}
+    h1{
+      font-size:clamp(38px,5vw,64px);font-weight:800;
+      line-height:1.05;letter-spacing:-1.5px;
+      margin-bottom:20px;
+      animation:fadeUp .7s .1s ease both;
+    }
+    h1 .highlight{
+      background:linear-gradient(135deg,var(--blue2),var(--cyan));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    }
+    .hero-sub{
+      font-size:17px;font-weight:400;color:var(--muted);
+      max-width:480px;line-height:1.7;margin-bottom:36px;
+      animation:fadeUp .7s .2s ease both;
+    }
+    .hero-sub strong{color:var(--text);font-weight:600}
+    .hero-actions{display:flex;gap:14px;flex-wrap:wrap;animation:fadeUp .7s .3s ease both}
+    .btn-primary{
+      display:inline-flex;align-items:center;gap:10px;
+      background:linear-gradient(135deg,var(--blue),var(--cyan));
+      color:#fff;padding:14px 30px;border-radius:10px;
+      font-weight:700;font-size:15px;text-decoration:none;
+      transition:all .2s;box-shadow:0 0 40px rgba(59,130,246,0.3);
+      letter-spacing:0.2px;
+    }
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 60px rgba(59,130,246,0.45)}
+    .btn-ghost{
+      display:inline-flex;align-items:center;gap:8px;
+      border:1px solid var(--border2);color:var(--muted);
+      padding:14px 24px;border-radius:10px;font-weight:500;font-size:14px;
+      text-decoration:none;transition:all .2s;
+    }
+    .btn-ghost:hover{border-color:var(--blue);color:var(--text)}
+    .hero-stats{display:flex;gap:32px;margin-top:48px;flex-wrap:wrap;animation:fadeUp .7s .4s ease both}
+    .stat{padding:16px 20px;background:var(--s1);border:1px solid var(--border);border-radius:12px;min-width:120px}
+    .stat-num{font-size:28px;font-weight:800;color:var(--text);line-height:1;margin-bottom:2px;font-variant-numeric:tabular-nums}
+    .stat-num .unit{font-size:14px;color:var(--blue2);font-weight:700}
+    .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px}
+
+    /* ── HERO VISUAL — SCANNER MOCKUP ── */
+    .hero-visual{animation:fadeUp .8s .2s ease both}
+    .scanner-card{
+      background:var(--s1);border:1px solid var(--border2);
+      border-radius:16px;padding:24px;position:relative;overflow:hidden;
+    }
+    .scanner-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;
+      height:2px;background:linear-gradient(90deg,transparent,var(--blue),var(--cyan),transparent);
+      animation:scanline 3s ease-in-out infinite;
+    }
+    @keyframes scanline{
+      0%{top:0;opacity:1}
+      100%{top:100%;opacity:0}
+    }
+    .scanner-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+    .scanner-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+    .scanner-badge{
+      font-family:var(--fm);font-size:10px;font-weight:500;
+      background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);
+      color:var(--green);padding:3px 10px;border-radius:100px;
+      display:flex;align-items:center;gap:5px;
+    }
+    .scanner-badge::before{content:'';width:5px;height:5px;background:var(--green);border-radius:50%;animation:blink 1.5s infinite}
+    .cv-list{display:flex;flex-direction:column;gap:10px}
+    .cv-item{
+      display:flex;align-items:center;gap:12px;
+      background:var(--s2);border:1px solid var(--border);
+      border-radius:10px;padding:12px 14px;
+      transition:border-color .3s;
+    }
+    .cv-item:hover{border-color:rgba(59,130,246,0.3)}
+    .cv-rank{
+      font-family:var(--fm);font-size:13px;font-weight:700;
+      width:26px;text-align:center;flex-shrink:0;
+    }
+    .cv-rank.gold{color:#f59e0b}
+    .cv-rank.silver{color:#94a3b8}
+    .cv-rank.bronze{color:#b45309}
+    .cv-info{flex:1;min-width:0}
+    .cv-name{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cv-role{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cv-score-wrap{flex-shrink:0;text-align:right}
+    .cv-score{font-family:var(--fm);font-size:16px;font-weight:700;line-height:1}
+    .cv-score.high{color:var(--green)}
+    .cv-score.mid{color:var(--amber)}
+    .cv-bar{height:3px;width:48px;background:var(--s3);border-radius:2px;margin-top:4px;overflow:hidden}
+    .cv-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--blue),var(--cyan))}
+    .cv-flag{font-family:var(--fm);font-size:9px;color:var(--red);background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);padding:2px 6px;border-radius:4px;margin-top:3px;display:inline-block}
+    .scanner-footer{
+      margin-top:16px;padding-top:14px;border-top:1px solid var(--border);
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .sf-label{font-size:10px;color:var(--muted);font-family:var(--fm)}
+    .sf-time{font-size:11px;font-weight:700;color:var(--cyan);font-family:var(--fm)}
+    .processing-bar{
+      height:4px;background:var(--s3);border-radius:2px;margin-top:10px;overflow:hidden;
+    }
+    .processing-fill{
+      height:100%;width:100%;
+      background:linear-gradient(90deg,var(--blue),var(--cyan),var(--blue));
+      background-size:200% 100%;
+      animation:shimmer 1.8s ease-in-out infinite;
+    }
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ── LOGOS / SOCIAL PROOF ── */
+    .proof{padding:40px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .proof-inner{display:flex;align-items:center;gap:40px;justify-content:center;flex-wrap:wrap}
+    .proof-label{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
+    .proof-items{display:flex;gap:32px;align-items:center;flex-wrap:wrap}
+    .proof-item{
+      font-family:var(--fm);font-size:12px;font-weight:500;color:var(--muted2);
+      display:flex;align-items:center;gap:6px;
+      padding:6px 14px;border:1px solid var(--border);border-radius:8px;
+    }
+    .proof-item span{color:var(--muted)}
+
+    /* ── PROBLEMS ── */
     .problems{padding:100px 0}
-    .section-tag{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent2);margin-bottom:16px}
-    .section-title{font-family:var(--font-d);font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:0px;line-height:1.1;margin-bottom:16px}
-    .section-sub{color:var(--muted);font-size:17px;font-weight:300;max-width:500px;line-height:1.7}
-    .problems-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-top:56px}
-    .problem-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;transition:border-color .2s,transform .2s}
-    .problem-card:hover{border-color:var(--border2);transform:translateY(-2px)}
-    .problem-icon{width:40px;height:40px;border-radius:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:16px}
-    .problem-card h3{font-family:var(--font-d);font-size:16px;font-weight:700;margin-bottom:8px}
-    .problem-card p{font-size:14px;color:var(--muted);line-height:1.6}
-    .features{padding:100px 0;background:var(--surface)}
-    .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:2px;margin-top:56px;border:1px solid var(--border);border-radius:16px;overflow:hidden}
-    .feature{padding:36px 32px;background:var(--surface);border-right:1px solid var(--border);border-bottom:1px solid var(--border);transition:background .2s;position:relative;overflow:hidden}
-    .feature:hover{background:var(--surface2)}
-    .feature-num{font-family:var(--font-d);font-size:48px;font-weight:800;color:rgba(59,110,248,0.08);position:absolute;top:16px;right:24px;line-height:1}
-    .feature-badge{display:inline-block;background:rgba(59,110,248,0.1);border:1px solid rgba(59,110,248,0.2);color:var(--accent2);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:100px;margin-bottom:14px}
-    .feature h3{font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:10px;line-height:1.2}
-    .feature p{font-size:14px;color:var(--muted);line-height:1.65}
-    .feature-highlight{margin-top:16px;font-size:13px;font-weight:600;color:var(--green)}
-    .how{padding:100px 0}
-    .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0;margin-top:56px;position:relative}
-    .steps::before{content:'';position:absolute;top:28px;left:10%;right:10%;height:1px;background:linear-gradient(to right,transparent,var(--border2),transparent)}
-    .step{text-align:center;padding:0 24px;position:relative}
-    .step-circle{width:56px;height:56px;border-radius:50%;background:var(--surface2);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-family:var(--font-d);font-size:18px;font-weight:800;color:var(--accent2);box-shadow:0 0 20px var(--accent-glow);position:relative;z-index:1}
-    .step h3{font-family:var(--font-d);font-size:16px;font-weight:700;margin-bottom:8px}
-    .step p{font-size:13px;color:var(--muted);line-height:1.6}
-    .roi{padding:100px 0;background:var(--surface)}
-    .roi-box{background:linear-gradient(135deg,rgba(59,110,248,0.08),rgba(139,92,246,0.06));border:1px solid rgba(59,110,248,0.2);border-radius:20px;padding:56px;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;margin-top:56px}
-    .roi-numbers{display:flex;flex-direction:column;gap:24px}
-    .roi-row{display:flex;justify-content:space-between;align-items:center;padding-bottom:20px;border-bottom:1px solid var(--border)}
-    .roi-row:last-child{border-bottom:none;padding-bottom:0}
-    .roi-label{font-size:14px;color:var(--muted)}
-    .roi-value{font-family:var(--font-d);font-size:22px;font-weight:800}
-    .roi-value.green{color:var(--green)}
-    .roi-value.accent{color:var(--accent2)}
-    .roi-text h3{font-family:var(--font-d);font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:16px;line-height:1.2}
-    .roi-text p{color:var(--muted);font-size:15px;line-height:1.7;margin-bottom:24px}
-    .roi-conclusion{background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:16px 20px;font-size:14px;font-weight:600;color:var(--green)}
+    .section-eyebrow{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue2);margin-bottom:12px;font-family:var(--fm)}
+    .section-title{font-size:clamp(26px,4vw,42px);font-weight:800;letter-spacing:-0.8px;line-height:1.1;margin-bottom:12px}
+    .section-sub{color:var(--muted);font-size:16px;font-weight:400;max-width:520px;line-height:1.7}
+    .problems-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-top:56px}
+    .problem-card{
+      background:var(--bg);padding:32px 28px;
+      transition:background .2s;
+      position:relative;
+    }
+    .problem-card:hover{background:var(--s1)}
+    .problem-card::after{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,transparent,rgba(239,68,68,0.4),transparent);
+      opacity:0;transition:opacity .3s;
+    }
+    .problem-card:hover::after{opacity:1}
+    .problem-emoji{font-size:28px;margin-bottom:14px;display:block}
+    .problem-card h3{font-size:15px;font-weight:700;margin-bottom:8px;letter-spacing:-0.2px}
+    .problem-card p{font-size:13px;color:var(--muted);line-height:1.65}
+    .problem-cost{
+      margin-top:14px;font-family:var(--fm);font-size:11px;
+      color:var(--red);background:rgba(239,68,68,0.07);
+      border:1px solid rgba(239,68,68,0.15);
+      padding:4px 10px;border-radius:6px;display:inline-block;
+    }
+
+    /* ── BEFORE AFTER ── */
+    .before-after{padding:80px 0;background:var(--s1)}
+    .ba-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:56px}
+    .ba-card{border-radius:14px;padding:28px;border:1px solid var(--border)}
+    .ba-card.before{background:rgba(239,68,68,0.04);border-color:rgba(239,68,68,0.15)}
+    .ba-card.after{background:rgba(16,185,129,0.04);border-color:rgba(16,185,129,0.2)}
+    .ba-label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;font-family:var(--fm)}
+    .ba-card.before .ba-label{color:var(--red)}
+    .ba-card.after .ba-label{color:var(--green)}
+    .ba-item{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;font-size:13px;color:var(--muted);line-height:1.5}
+    .ba-item .ico{flex-shrink:0;margin-top:1px;font-size:14px}
+    .ba-time{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-family:var(--fm);font-size:20px;font-weight:700}
+    .ba-card.before .ba-time{color:var(--red)}
+    .ba-card.after .ba-time{color:var(--green)}
+    .ba-time span{font-size:11px;color:var(--muted);font-weight:400;display:block;margin-top:2px}
+
+    /* ── FEATURES ── */
+    .features{padding:100px 0}
+    .features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px}
+    .feat{
+      background:var(--s1);border:1px solid var(--border);
+      border-radius:14px;padding:28px 24px;
+      position:relative;overflow:hidden;
+      transition:border-color .2s,transform .2s;
+    }
+    .feat:hover{border-color:rgba(59,130,246,0.3);transform:translateY(-3px)}
+    .feat-glow{
+      position:absolute;width:120px;height:120px;border-radius:50%;
+      top:-40px;right:-40px;pointer-events:none;
+      background:radial-gradient(circle,rgba(59,130,246,0.08) 0%,transparent 70%);
+    }
+    .feat-icon{
+      width:42px;height:42px;border-radius:10px;
+      background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);
+      display:flex;align-items:center;justify-content:center;
+      font-size:20px;margin-bottom:16px;
+    }
+    .feat h3{font-size:15px;font-weight:700;margin-bottom:8px;letter-spacing:-0.2px}
+    .feat p{font-size:13px;color:var(--muted);line-height:1.65}
+    .feat-tag{
+      margin-top:14px;font-family:var(--fm);font-size:10px;font-weight:600;
+      color:var(--cyan);background:rgba(6,182,212,0.08);
+      border:1px solid rgba(6,182,212,0.2);
+      padding:3px 10px;border-radius:6px;display:inline-block;
+    }
+
+    /* ── ROI ── */
+    .roi{padding:100px 0;background:var(--s1)}
+    .roi-inner{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;margin-top:56px}
+    .roi-calc{display:flex;flex-direction:column;gap:0}
+    .roi-row{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:16px 20px;border-bottom:1px solid var(--border);
+    }
+    .roi-row:first-child{border-top:1px solid var(--border)}
+    .roi-row-label{font-size:13px;color:var(--muted)}
+    .roi-row-val{font-family:var(--fm);font-size:18px;font-weight:700}
+    .roi-row-val.blue{color:var(--blue2)}
+    .roi-row-val.green{color:var(--green)}
+    .roi-row-val.muted{color:var(--muted)}
+    .roi-row.total{background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.2)!important}
+    .roi-text h3{font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:14px;line-height:1.2}
+    .roi-text p{color:var(--muted);font-size:15px;line-height:1.7;margin-bottom:20px}
+    .roi-highlight{
+      background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);
+      border-radius:10px;padding:16px 18px;font-size:14px;font-weight:600;color:var(--green);
+    }
+    .roi-week{
+      margin-top:12px;font-size:13px;color:var(--muted);
+      background:var(--s2);border:1px solid var(--border);
+      border-radius:8px;padding:12px 16px;font-family:var(--fm);
+    }
+    .roi-week strong{color:var(--blue2)}
+
+    /* ── PRICING ── */
     .pricing{padding:100px 0}
     .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px}
-    .price-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 28px;position:relative;transition:transform .2s,border-color .2s}
-    .price-card:hover{transform:translateY(-4px);border-color:var(--border2)}
-    .price-card.featured{border-color:var(--accent);background:linear-gradient(180deg,rgba(59,110,248,0.06) 0%,var(--surface) 100%);box-shadow:0 0 60px rgba(59,110,248,0.15)}
-    .price-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:4px 16px;border-radius:100px;white-space:nowrap}
-    .price-plan{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-    .price-amount{font-family:var(--font-d);font-size:48px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px}
-    .price-amount span{font-size:20px;color:var(--muted);font-weight:400}
-    .price-desc{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.5}
-    .price-features{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
-    .price-features li{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted)}
-    .price-features li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px}
-    .price-features li.dim{opacity:0.4}
-    .price-features li.dim::before{content:'—';color:var(--muted2)}
-    .price-btn{display:block;text-align:center;padding:13px;border-radius:9px;font-weight:600;font-size:14px;text-decoration:none;transition:all .2s}
-    .price-btn.outline{border:1.5px solid var(--border2);color:var(--text)}
-    .price-btn.outline:hover{border-color:var(--accent);color:var(--accent2)}
-    .price-btn.filled{background:var(--accent);color:#fff;box-shadow:0 4px 20px rgba(59,110,248,0.3)}
-    .price-btn.filled:hover{background:var(--accent2)}
-    .price-note{text-align:center;margin-top:32px;font-size:13px;color:var(--muted)}
+    .price-card{
+      background:var(--s1);border:1px solid var(--border);
+      border-radius:16px;padding:32px 26px;position:relative;
+      transition:transform .2s,border-color .2s;
+    }
+    .price-card:hover{transform:translateY(-4px)}
+    .price-card.featured{
+      border-color:var(--blue);
+      background:linear-gradient(180deg,rgba(59,130,246,0.05) 0%,var(--s1) 60%);
+      box-shadow:0 0 60px rgba(59,130,246,0.12),inset 0 1px 0 rgba(59,130,246,0.2);
+    }
+    .price-badge{
+      position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+      background:linear-gradient(135deg,var(--blue),var(--cyan));
+      color:#fff;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+      padding:4px 16px;border-radius:100px;white-space:nowrap;font-family:var(--fm);
+    }
+    .price-plan{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:var(--fm)}
+    .price-amount{font-size:44px;font-weight:800;letter-spacing:-1.5px;margin-bottom:4px;line-height:1}
+    .price-amount .currency{font-size:20px;color:var(--muted);font-weight:500;vertical-align:super;font-size:16px}
+    .price-amount .period{font-size:15px;color:var(--muted);font-weight:400}
+    .price-desc{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.5;margin-top:6px}
+    .price-divider{height:1px;background:var(--border);margin-bottom:20px}
+    .price-features{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:28px}
+    .price-features li{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--muted);line-height:1.4}
+    .price-features li .ck{color:var(--green);font-size:12px;flex-shrink:0;margin-top:1px;font-weight:700}
+    .price-features li.off{opacity:0.35}
+    .price-features li.off .ck{color:var(--muted2)}
+    .price-btn{
+      display:block;text-align:center;padding:13px;border-radius:9px;
+      font-weight:700;font-size:14px;text-decoration:none;transition:all .2s;letter-spacing:0.2px;
+    }
+    .price-btn.outline{border:1px solid var(--border2);color:var(--text)}
+    .price-btn.outline:hover{border-color:var(--blue);color:var(--blue2)}
+    .price-btn.solid{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;box-shadow:0 4px 20px rgba(59,130,246,0.3)}
+    .price-btn.solid:hover{box-shadow:0 6px 30px rgba(59,130,246,0.45);transform:translateY(-1px)}
+    .price-note{text-align:center;margin-top:28px;font-size:13px;color:var(--muted)}
     .price-note strong{color:var(--green)}
+
+    /* ── GUARANTEE ── */
     .guarantee{padding:80px 0}
-    .guarantee-box{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:48px 56px;display:flex;gap:48px;align-items:center}
-    .guarantee-icon{font-size:64px;flex-shrink:0}
-    .guarantee-text h3{font-family:var(--font-d);font-size:24px;font-weight:800;margin-bottom:12px}
-    .guarantee-text p{color:var(--muted);font-size:15px;line-height:1.7}
-    .guarantee-conditions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
-    .condition{background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);color:var(--green);font-size:12px;font-weight:600;padding:5px 14px;border-radius:100px}
-    .cta-section{padding:100px 0;text-align:center;position:relative;overflow:hidden}
-    .cta-glow{position:absolute;width:600px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(59,110,248,0.12) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
-    .cta-section h2{font-family:var(--font-d);font-size:clamp(32px,5vw,56px);font-weight:800;letter-spacing:-0.5px;margin-bottom:20px;position:relative}
-    .cta-section p{color:var(--muted);font-size:17px;margin-bottom:40px;position:relative}
-    .cta-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;position:relative}
-    footer{border-top:1px solid var(--border);padding:32px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
-    footer .logo{font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--muted)}
-    footer .logo span{color:var(--accent2)}
-    footer p{font-size:12px;color:var(--muted2)}
-    @media(max-width:768px){
-      nav{padding:16px 24px}
+    .guarantee-inner{
+      background:var(--s1);border:1px solid var(--border2);border-radius:20px;
+      padding:48px 52px;display:flex;gap:48px;align-items:center;
+    }
+    .guarantee-shield{
+      font-size:72px;flex-shrink:0;
+      filter:drop-shadow(0 0 20px rgba(59,130,246,0.3));
+    }
+    .guarantee-text h3{font-size:22px;font-weight:800;margin-bottom:10px;letter-spacing:-0.3px}
+    .guarantee-text p{color:var(--muted);font-size:14px;line-height:1.7}
+    .guarantee-tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .gtag{
+      background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);
+      color:var(--green);font-size:11px;font-weight:700;
+      padding:5px 14px;border-radius:100px;font-family:var(--fm);
+    }
+
+    /* ── CTA ── */
+    .cta-section{padding:100px 0;text-align:center}
+    .cta-inner{
+      background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(6,182,212,0.05));
+      border:1px solid rgba(59,130,246,0.15);border-radius:24px;
+      padding:72px 48px;position:relative;overflow:hidden;
+    }
+    .cta-inner::before{
+      content:'';position:absolute;inset:0;border-radius:24px;
+      background:radial-gradient(ellipse 60% 60% at 50% 0%,rgba(59,130,246,0.1) 0%,transparent 70%);
+      pointer-events:none;
+    }
+    .cta-section h2{font-size:clamp(28px,5vw,52px);font-weight:800;letter-spacing:-1px;margin-bottom:16px;position:relative}
+    .cta-section p{color:var(--muted);font-size:16px;margin-bottom:36px;position:relative}
+    .cta-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;position:relative}
+
+    /* ── FOOTER ── */
+    footer{
+      border-top:1px solid var(--border);padding:28px 48px;
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+    }
+    .footer-logo{font-size:15px;font-weight:800;color:var(--muted2);display:flex;align-items:center;gap:5px}
+    .footer-logo .dot{width:6px;height:6px;background:var(--blue);border-radius:50%}
+    footer p{font-size:11px;color:var(--muted2)}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px){
+      nav{padding:14px 24px}
       .nav-links{display:none}
       .container{padding:0 24px}
-      .hero{padding:100px 0 60px}
-      h1{font-size:38px;letter-spacing:-1px}
-      .hero-stats{gap:24px}
-      .roi-box{grid-template-columns:1fr;gap:40px;padding:32px}
+      .hero-inner{grid-template-columns:1fr;gap:48px}
+      .hero-visual{order:-1}
+      .hero-stats{gap:12px}
+      .problems-grid{grid-template-columns:1fr}
+      .ba-grid{grid-template-columns:1fr}
+      .features-grid{grid-template-columns:1fr}
+      .roi-inner{grid-template-columns:1fr;gap:40px}
       .pricing-grid{grid-template-columns:1fr}
-      .guarantee-box{flex-direction:column;padding:32px;gap:24px}
-      .steps::before{display:none}
+      .guarantee-inner{flex-direction:column;padding:32px;gap:24px}
       footer{flex-direction:column;text-align:center}
     }
+
+    /* ── SCROLL ANIMATIONS ── */
+    .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+    .reveal.visible{opacity:1;transform:translateY(0)}
   </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
-  <a href="/landing" class="nav-logo">CV<span>.</span>scanner</a>
+  <a href="/landing" class="nav-logo">
+    <span class="dot"></span>CV.scanner
+  </a>
   <div class="nav-links">
     <a href="#features">Functionalitati</a>
     <a href="#pricing">Preturi</a>
@@ -153,147 +422,341 @@
   </div>
 </nav>
 
+<!-- HERO -->
 <section class="hero">
-  <div class="hero-glow"></div>
-  <div class="hero-glow2"></div>
   <div class="container">
-    <div class="hero-tag">AI pentru recrutare profesionala</div>
-    <h1>Screening CV<br/>de <em>10x mai rapid.</em><br/>Decizii mai bune.</h1>
-    <p class="hero-sub">Analizeaza <strong>50 de CV-uri in 2 minute</strong>, primesti scoruri obiective, red flags automate si rapoarte PDF gata de trimis clientului. Construit exclusiv pentru agentii de recrutare din Romania.</p>
-    <div class="hero-actions">
-      <a href="/login" class="btn-primary"><span>&#8594;</span> Solicita acces demo</a>
-      <a href="#pricing" class="btn-secondary">Vezi planurile &amp; preturi &#8595;</a>
-    </div>
-    <div class="hero-stats">
-      <div class="stat"><div class="stat-num">50<span>h</span></div><div class="stat-label">economisite lunar</div></div>
-      <div class="stat"><div class="stat-num">2<span>min</span></div><div class="stat-label">pentru 50 CV-uri</div></div>
-      <div class="stat"><div class="stat-num">10<span>x</span></div><div class="stat-label">mai rapid decat manual</div></div>
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge"><span></span>AI pentru recrutare profesionala</div>
+        <h1>Screening CV<br/>de <span class="highlight">10x mai rapid.</span><br/>Decizii mai bune.</h1>
+        <p class="hero-sub">
+          Analizeaza <strong>50 de CV-uri in 2 minute</strong>, primesti scoruri obiective,
+          red flags automate si rapoarte PDF gata de trimis clientului.
+          Construit exclusiv pentru agentii de recrutare.
+        </p>
+        <div class="hero-actions">
+          <a href="/login" class="btn-primary">Solicita acces demo &rarr;</a>
+          <a href="#pricing" class="btn-ghost">Vezi planurile &darr;</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat">
+            <div class="stat-num"><span class="counter" data-target="40">0</span><span class="unit">h</span></div>
+            <div class="stat-label">minim / luna</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num"><span class="counter" data-target="2">0</span><span class="unit">min</span></div>
+            <div class="stat-label">50 CV-uri</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num"><span class="counter" data-target="10">0</span><span class="unit">x</span></div>
+            <div class="stat-label">ROI lunar</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCANNER MOCKUP -->
+      <div class="hero-visual">
+        <div class="scanner-card">
+          <div class="scanner-header">
+            <div class="scanner-title">Ranking candidati &mdash; Senior Dev</div>
+            <div class="scanner-badge">Analiza activa</div>
+          </div>
+          <div class="cv-list">
+            <div class="cv-item">
+              <div class="cv-rank gold">1</div>
+              <div class="cv-info">
+                <div class="cv-name">Andrei M.</div>
+                <div class="cv-role">Senior Backend Engineer &bull; 7 ani</div>
+              </div>
+              <div class="cv-score-wrap">
+                <div class="cv-score high">94</div>
+                <div class="cv-bar"><div class="cv-bar-fill" style="width:94%"></div></div>
+              </div>
+            </div>
+            <div class="cv-item">
+              <div class="cv-rank silver">2</div>
+              <div class="cv-info">
+                <div class="cv-name">Elena P.</div>
+                <div class="cv-role">Full Stack Developer &bull; 5 ani</div>
+              </div>
+              <div class="cv-score-wrap">
+                <div class="cv-score high">87</div>
+                <div class="cv-bar"><div class="cv-bar-fill" style="width:87%"></div></div>
+              </div>
+            </div>
+            <div class="cv-item">
+              <div class="cv-rank bronze">3</div>
+              <div class="cv-info">
+                <div class="cv-name">Mihai T.</div>
+                <div class="cv-role">Backend Developer &bull; 4 ani</div>
+              </div>
+              <div class="cv-score-wrap">
+                <div class="cv-score mid">71</div>
+                <div class="cv-bar"><div class="cv-bar-fill" style="width:71%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+              </div>
+            </div>
+            <div class="cv-item" style="opacity:0.5">
+              <div class="cv-rank" style="color:var(--muted2)">4</div>
+              <div class="cv-info">
+                <div class="cv-name">Radu C.</div>
+                <div class="cv-role">Junior Developer &bull; 1 an</div>
+                <div class="cv-flag">job hopping detectat</div>
+              </div>
+              <div class="cv-score-wrap">
+                <div class="cv-score" style="color:var(--red)">44</div>
+                <div class="cv-bar"><div class="cv-bar-fill" style="width:44%;background:linear-gradient(90deg,#ef4444,#f87171)"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="processing-bar"><div class="processing-fill"></div></div>
+          <div class="scanner-footer">
+            <div class="sf-label">4 CV-uri analizate &bull; Claude AI</div>
+            <div class="sf-time">1.8s procesare</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="problems">
+<!-- SOCIAL PROOF -->
+<div class="proof">
   <div class="container">
-    <div class="section-tag">Problema reala</div>
-    <h2 class="section-title">Recrutarea manuala<br/>iti mananca timpul</h2>
-    <p class="section-sub">Fiecare recruitor pierde 30-50 ore pe luna pe sarcini pe care AI-ul le face in secunde.</p>
+    <div class="proof-inner">
+      <div class="proof-label">Tehnologie verificata</div>
+      <div class="proof-items">
+        <div class="proof-item"><span>Anthropic</span> Claude API</div>
+        <div class="proof-item"><span>Criptare</span> TLS 256-bit</div>
+        <div class="proof-item"><span>Stergere</span> 7 zile</div>
+        <div class="proof-item"><span>Standard</span> GDPR</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLEMS -->
+<section class="problems reveal">
+  <div class="container">
+    <div class="section-eyebrow">Problema reala</div>
+    <h2 class="section-title">Recrutarea manuala<br/>iti mananca o saptamana pe luna</h2>
+    <p class="section-sub">Fiecare recruitor pierde minim 40 de ore pe luna pe sarcini pe care AI-ul le face in secunde.</p>
     <div class="problems-grid">
-      <div class="problem-card"><div class="problem-icon">&#128565;</div><h3>Oboseala decizionala</h3><p>Dupa al 20-lea CV citit, deciziile se iau pe pilot automat. Candidati buni sunt eliminati, candidati slabi trec mai departe.</p></div>
-      <div class="problem-card"><div class="problem-icon">&#128231;</div><h3>Rapoarte neprofesionale</h3><p>Trimiti CV-uri brute pe email clientului. Agentiile mari trimit rapoarte structurate cu scoruri si justificari. Tu cum arati?</p></div>
-      <div class="problem-card"><div class="problem-icon">&#128269;</div><h3>Red flags ratate</h3><p>Job hopping, gaps inexplicabile, buzzwords fara substanta — le identifici dupa ore de citit. CV Scanner le vede instant.</p></div>
-      <div class="problem-card"><div class="problem-icon">&#9203;</div><h3>Timp pierdut pe volum</h3><p>6 ore de screening pentru un singur post. Nu poti prelua mai multi clienti fara sa angajezi mai multi oameni.</p></div>
-      <div class="problem-card"><div class="problem-icon">&#128543;</div><h3>Frica de candidatul ratat</h3><p>Poate candidatul perfect era in pagina 3 si l-ai ratat pentru ca erai obosit. Cu scoruri obiective, nu mai ratezi nimic.</p></div>
-      <div class="problem-card"><div class="problem-icon">&#128202;</div><h3>Fara date pentru client</h3><p>Clientul intreaba de ce ai ales candidatul X. Raspunsul tau e instinct. CV Scanner iti da date concrete cu care justifici orice decizie.</p></div>
+      <div class="problem-card">
+        <span class="problem-emoji">&#128565;</span>
+        <h3>Oboseala decizionala</h3>
+        <p>Dupa al 20-lea CV citit, deciziile se iau pe pilot automat. Candidati buni sunt eliminati, candidati slabi trec mai departe.</p>
+        <div class="problem-cost">cost: 3-4 ore / pozitie</div>
+      </div>
+      <div class="problem-card">
+        <span class="problem-emoji">&#128231;</span>
+        <h3>Rapoarte neprofesionale</h3>
+        <p>Trimiti CV-uri brute pe email clientului. Agentiile mari trimit rapoarte structurate cu scoruri. Tu cum arati?</p>
+        <div class="problem-cost">cost: imagine de agentie mica</div>
+      </div>
+      <div class="problem-card">
+        <span class="problem-emoji">&#128269;</span>
+        <h3>Red flags ratate</h3>
+        <p>Job hopping, gaps inexplicabile, buzzwords fara substanta. Le identifici dupa ore de citit sau nu le identifici deloc.</p>
+        <div class="problem-cost">cost: plasament esuat</div>
+      </div>
+      <div class="problem-card">
+        <span class="problem-emoji">&#9203;</span>
+        <h3>O saptamana pierduta</h3>
+        <p>40 de ore pe luna inseamna o saptamana lucratoare intreaga. Timp in care nu aduci clienti noi si nu inchizi plasamente.</p>
+        <div class="problem-cost">cost: 500 EUR valoare pierduta</div>
+      </div>
+      <div class="problem-card">
+        <span class="problem-emoji">&#128543;</span>
+        <h3>Frica de candidatul ratat</h3>
+        <p>Poate candidatul perfect era in pagina 3 si l-ai ratat pentru ca erai obosit. Cu scoruri obiective, nu mai ratezi nimic.</p>
+        <div class="problem-cost">cost: comision pierdut</div>
+      </div>
+      <div class="problem-card">
+        <span class="problem-emoji">&#128202;</span>
+        <h3>Fara date pentru client</h3>
+        <p>Clientul intreaba de ce ai ales candidatul X. Raspunsul tau e instinct. CV Scanner iti da date concrete.</p>
+        <div class="problem-cost">cost: credibilitate scazuta</div>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="features" id="features">
+<!-- BEFORE / AFTER -->
+<section class="before-after reveal">
   <div class="container">
-    <div class="section-tag">Functionalitati</div>
+    <div class="section-eyebrow">Transformarea reala</div>
+    <h2 class="section-title">O zi de munca, inainte si dupa</h2>
+    <div class="ba-grid">
+      <div class="ba-card before">
+        <div class="ba-label">&#10006; Inainte de CV Scanner</div>
+        <div class="ba-item"><span class="ico">&#8987;</span>Deschizi 80 de emailuri cu CV-uri atasate</div>
+        <div class="ba-item"><span class="ico">&#8987;</span>Citesti fiecare CV manual, iei notite</div>
+        <div class="ba-item"><span class="ico">&#8987;</span>Faci un Excel cu scoruri subiective</div>
+        <div class="ba-item"><span class="ico">&#8987;</span>Scrii un email catre client cu CV-urile atasate</div>
+        <div class="ba-item"><span class="ico">&#8987;</span>Clientul intreaba de ce l-ai ales pe X, nu pe Y</div>
+        <div class="ba-item"><span class="ico">&#8987;</span>Repeti pentru urmatoarea pozitie</div>
+        <div class="ba-time">6 ore / pozitie<span>pentru o agentie cu 5 joburi active = 30 ore/saptamana</span></div>
+      </div>
+      <div class="ba-card after">
+        <div class="ba-label">&#10004; Cu CV Scanner</div>
+        <div class="ba-item"><span class="ico">&#9889;</span>Uploadeaza 80 CV-uri simultan in Comparare</div>
+        <div class="ba-item"><span class="ico">&#9889;</span>AI analizeaza toate CV-urile in 2-3 minute</div>
+        <div class="ba-item"><span class="ico">&#9889;</span>Primesti ranking cu scoruri, red flags, top 5</div>
+        <div class="ba-item"><span class="ico">&#9889;</span>Descarci raportul PDF gata de trimis</div>
+        <div class="ba-item"><span class="ico">&#9889;</span>Clientul vede scoruri si justificari clare</div>
+        <div class="ba-item"><span class="ico">&#9889;</span>Treci la urmatoarea pozitie in 15 minute</div>
+        <div class="ba-time">30 min / pozitie<span>pentru 5 joburi active = 2.5 ore/saptamana</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features reveal" id="features">
+  <div class="container">
+    <div class="section-eyebrow">Functionalitati</div>
     <h2 class="section-title">Tot ce ai nevoie<br/>intr-un singur tool</h2>
     <div class="features-grid">
-      <div class="feature"><div class="feature-num">01</div><div class="feature-badge">Analiza CV</div><h3>Scoring complet in 15 secunde</h3><p>Scor general, seniority, skills, red flags, risc retentie, scor ATS si rezumat de 3 bullet-uri pentru manager — totul dintr-o analiza.</p><div class="feature-highlight">&#8593; De la 20 min/CV la 15 secunde</div></div>
-      <div class="feature"><div class="feature-num">02</div><div class="feature-badge">Comparare Bulk</div><h3>Ranking automat 50 CV-uri</h3><p>Uploadeaza pana la 50 CV-uri simultan si primesti instant un clasament cu scoruri comparative si shortlist Top 5.</p><div class="feature-highlight">&#8593; 6 ore de screening in 2 minute</div></div>
-      <div class="feature"><div class="feature-num">03</div><div class="feature-badge">Job Match</div><h3>Compatibilitate CV vs. job</h3><p>Compara orice CV cu descrierea postului — scor de compatibilitate, skills match, skills lipsa si recomandari concrete.</p><div class="feature-highlight">&#8593; Justifici fiecare decizie cu date</div></div>
-      <div class="feature"><div class="feature-num">04</div><div class="feature-badge">Matching Auto</div><h3>N candidati x N joburi simultan</h3><p>Ai 10 CV-uri si 5 joburi deschise? Matching Auto genereaza toate combinatiile si le rankeaza automat.</p><div class="feature-highlight">&#8593; Potrivire optima in secunde</div></div>
-      <div class="feature"><div class="feature-num">05</div><div class="feature-badge">Export Profesional</div><h3>Rapoarte PDF si Excel</h3><p>Rapoarte structurate gata de trimis clientului. Arati ca o agentie de 50 de oameni, chiar daca esti o echipa mica.</p><div class="feature-highlight">&#8593; Imagine profesionala instantanea</div></div>
-      <div class="feature"><div class="feature-num">06</div><div class="feature-badge">Blind Recruitment</div><h3>Selectie fara bias</h3><p>Activeaza Blind Recruitment si datele personale sunt eliminate automat inainte de analiza. Decizii bazate strict pe competente.</p><div class="feature-highlight">&#8593; Conformitate GDPR si etica</div></div>
+      <div class="feat">
+        <div class="feat-glow"></div>
+        <div class="feat-icon">&#128203;</div>
+        <h3>Analiza CV completa</h3>
+        <p>Scor general, seniority, skills, red flags, risc retentie, scor ATS si rezumat de 3 puncte pentru manager.</p>
+        <div class="feat-tag">De la 20 min la 15 secunde</div>
+      </div>
+      <div class="feat">
+        <div class="feat-glow"></div>
+        <div class="feat-icon">&#127942;</div>
+        <h3>Ranking bulk 50 CV-uri</h3>
+        <p>Uploadeaza pana la 50 CV-uri simultan si primesti instant un clasament cu scoruri comparative si shortlist Top 5.</p>
+        <div class="feat-tag">6 ore de screening in 2 minute</div>
+      </div>
+      <div class="feat">
+        <div class="feat-glow"></div>
+        <div class="feat-icon">&#127919;</div>
+        <h3>Job Match</h3>
+        <p>Scor de compatibilitate CV versus job, skills match, skills lipsa si recomandari concrete cu plan de actiune.</p>
+        <div class="feat-tag">Justifici fiecare decizie cu date</div>
+      </div>
+      <div class="feat">
+        <div class="feat-glow"></div>
+        <div class="feat-icon">&#9889;</div>
+        <h3>Matching Auto</h3>
+        <p>10 CV-uri si 5 joburi? Matching Auto genereaza toate combinatiile si le rankeaza automat in secunde.</p>
+        <div class="feat-tag">Potrivire optima instantanea</div>
+      </div>
+      <div class="feat">
+        <div class="feat-glow"></div>
+        <div class="feat-icon">&#128196;</div>
+        <h3>Rapoarte PDF si Excel</h3>
+        <p>Rapoarte structurate gata de trimis clientului. Arati ca o agentie de 50 de oameni, chiar daca esti solo.</p>
+        <div class="feat-tag">Imagine profesionala instantanea</div>
+      </div>
+      <div class="feat">
+        <div class="feat-glow"></div>
+        <div class="feat-icon">&#128065;</div>
+        <h3>Blind Recruitment</h3>
+        <p>Elimina automat datele personale inainte de analiza. Decizii bazate strict pe competente. Conformitate GDPR.</p>
+        <div class="feat-tag">Selectie fara bias</div>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="how">
+<!-- ROI -->
+<section class="roi reveal">
   <div class="container">
-    <div class="section-tag">Cum functioneaza</div>
-    <h2 class="section-title">3 pasi simpli</h2>
-    <div class="steps">
-      <div class="step"><div class="step-circle">1</div><h3>Uploadeaza CV-urile</h3><p>Drag &amp; drop PDF sau TXT. Pana la 50 de CV-uri simultan in panoul de Comparare.</p></div>
-      <div class="step"><div class="step-circle">2</div><h3>AI analizeaza instant</h3><p>Claude AI proceseaza fiecare CV si genereaza scoruri, red flags si insights in 10-30 secunde.</p></div>
-      <div class="step"><div class="step-circle">3</div><h3>Exporti si trimiti</h3><p>Descarci raportul PDF sau Excel si il trimiti direct clientului. Gata.</p></div>
-    </div>
-  </div>
-</section>
-
-<section class="roi">
-  <div class="container">
-    <div class="section-tag">Calculul de rentabilitate</div>
+    <div class="section-eyebrow">Calculul de rentabilitate</div>
     <h2 class="section-title">Se plateste singur<br/>in prima saptamana</h2>
-    <div class="roi-box">
-      <div class="roi-numbers">
-        <div class="roi-row"><span class="roi-label">Timp economisit lunar</span><span class="roi-value accent">50 ore</span></div>
-        <div class="roi-row"><span class="roi-label">Valoare ora recruitor</span><span class="roi-value accent">15 EUR</span></div>
-        <div class="roi-row"><span class="roi-label">Valoare recuperata lunar</span><span class="roi-value green">750 EUR</span></div>
-        <div class="roi-row"><span class="roi-label">Cost CV Scanner (Solo)</span><span class="roi-value" style="color:var(--muted)">49 EUR</span></div>
-        <div class="roi-row"><span class="roi-label">ROI lunar</span><span class="roi-value green">15x</span></div>
+    <div class="roi-inner">
+      <div class="roi-calc">
+        <div class="roi-row">
+          <span class="roi-row-label">Timp economisit lunar</span>
+          <span class="roi-row-val blue">minim 40 ore</span>
+        </div>
+        <div class="roi-row">
+          <span class="roi-row-label">Valoare ora recruitor</span>
+          <span class="roi-row-val blue">12.5 EUR</span>
+        </div>
+        <div class="roi-row">
+          <span class="roi-row-label">Valoare recuperata lunar</span>
+          <span class="roi-row-val green">500 EUR</span>
+        </div>
+        <div class="roi-row">
+          <span class="roi-row-label">Cost CV Scanner Solo</span>
+          <span class="roi-row-val muted">49 EUR</span>
+        </div>
+        <div class="roi-row total">
+          <span class="roi-row-label" style="font-weight:700;color:var(--text)">ROI lunar</span>
+          <span class="roi-row-val green" style="font-size:24px">10x</span>
+        </div>
       </div>
       <div class="roi-text">
-        <h3>Un plasament in plus acopera tot costul anual</h3>
-        <p>O agentie de recrutare castiga 500-2.000 EUR per plasament reusit. CV Scanner costa 49-199 EUR/luna. Un singur plasament in plus pe an — generat de timpul recuperat — acopera tot abonamentul.</p>
-        <div class="roi-conclusion">&#10003; Break-even in prima saptamana de utilizare activa</div>
+        <h3>40 de ore inseamna o saptamana lucratoare intreaga</h3>
+        <p>Ce faci cu o saptamana in plus in fiecare luna? Preiei un client nou, inchizi inca un plasament, cresti fara sa angajezi pe nimeni.</p>
+        <div class="roi-highlight">Un singur plasament in plus pe an acopera tot abonamentul de zeci de ori.</div>
+        <div class="roi-week">O agentie castiga <strong>500-2.000 EUR</strong> per plasament reusit. CV Scanner costa <strong>49 EUR/luna</strong>.</div>
       </div>
     </div>
   </div>
 </section>
 
-<section class="pricing" id="pricing">
+<!-- PRICING -->
+<section class="pricing reveal" id="pricing">
   <div class="container">
-    <div class="section-tag">Preturi</div>
+    <div class="section-eyebrow">Preturi</div>
     <h2 class="section-title">Simplu si transparent</h2>
     <p class="section-sub">Fara costuri ascunse. Fara contract pe termen lung. Anulezi oricand.</p>
     <div class="pricing-grid">
       <div class="price-card">
         <div class="price-plan">Solo</div>
-        <div class="price-amount">49<span> EUR/luna</span></div>
-        <p class="price-desc">Pentru recruiterul independent sau fondatorul care lucreaza singur.</p>
+        <div class="price-amount"><span class="currency">EUR</span>49<span class="period">/luna</span></div>
+        <p class="price-desc">Pentru recruiterul independent care lucreaza singur.</p>
+        <div class="price-divider"></div>
         <ul class="price-features">
-          <li>1 utilizator</li>
-          <li>300 analize CV/luna</li>
-          <li>Analiza completa + Red Flags</li>
-          <li>Job Match</li>
-          <li>Comparare pana la 20 CV-uri</li>
-          <li>Export PDF</li>
-          <li>Scrisoare de respingere</li>
-          <li class="dim">Blind Recruitment</li>
-          <li class="dim">Matching Auto</li>
-          <li class="dim">Export Excel</li>
+          <li><span class="ck">&#10003;</span>1 utilizator</li>
+          <li><span class="ck">&#10003;</span>300 analize CV / luna</li>
+          <li><span class="ck">&#10003;</span>Analiza completa + Red Flags</li>
+          <li><span class="ck">&#10003;</span>Job Match</li>
+          <li><span class="ck">&#10003;</span>Comparare pana la 20 CV-uri</li>
+          <li><span class="ck">&#10003;</span>Export PDF</li>
+          <li class="off"><span class="ck">&#8212;</span>Blind Recruitment</li>
+          <li class="off"><span class="ck">&#8212;</span>Matching Auto</li>
         </ul>
         <a href="/login" class="price-btn outline">Solicita acces</a>
       </div>
       <div class="price-card featured">
         <div class="price-badge">Recomandat</div>
         <div class="price-plan">Echipa</div>
-        <div class="price-amount">99<span> EUR/luna</span></div>
-        <p class="price-desc">Pentru agentie cu 2-5 recruiteri activi si volum mediu de CV-uri.</p>
+        <div class="price-amount"><span class="currency">EUR</span>99<span class="period">/luna</span></div>
+        <p class="price-desc">Pentru agentie cu 2 pana la 5 recruiteri activi.</p>
+        <div class="price-divider"></div>
         <ul class="price-features">
-          <li>5 utilizatori</li>
-          <li>1.000 analize CV/luna</li>
-          <li>Analiza completa + Red Flags</li>
-          <li>Job Match</li>
-          <li>Comparare pana la 50 CV-uri</li>
-          <li>Export PDF + Excel</li>
-          <li>Scrisoare de respingere</li>
-          <li>Blind Recruitment</li>
-          <li>Matching Auto</li>
-          <li>Rezumat pentru manager</li>
+          <li><span class="ck">&#10003;</span>5 utilizatori</li>
+          <li><span class="ck">&#10003;</span>1.000 analize CV / luna</li>
+          <li><span class="ck">&#10003;</span>Analiza completa + Red Flags</li>
+          <li><span class="ck">&#10003;</span>Job Match</li>
+          <li><span class="ck">&#10003;</span>Comparare pana la 50 CV-uri</li>
+          <li><span class="ck">&#10003;</span>Export PDF si Excel</li>
+          <li><span class="ck">&#10003;</span>Blind Recruitment</li>
+          <li><span class="ck">&#10003;</span>Matching Auto</li>
         </ul>
-        <a href="/login" class="price-btn filled">Solicita acces</a>
+        <a href="/login" class="price-btn solid">Solicita acces</a>
       </div>
       <div class="price-card">
         <div class="price-plan">Agentie</div>
-        <div class="price-amount">199<span> EUR/luna</span></div>
-        <p class="price-desc">Pentru agentie cu 5-10 recruiteri sau volum mare de candidati lunar.</p>
+        <div class="price-amount"><span class="currency">EUR</span>199<span class="period">/luna</span></div>
+        <p class="price-desc">Pentru agentie cu 5 pana la 10 recruiteri sau volum mare.</p>
+        <div class="price-divider"></div>
         <ul class="price-features">
-          <li>10 utilizatori</li>
-          <li>Analize nelimitate</li>
-          <li>Toate functiile incluse</li>
-          <li>Onboarding personalizat 1:1</li>
-          <li>Sesiune lunara de optimizare</li>
-          <li>Acces beta functii noi</li>
-          <li>Suport telefonic dedicat</li>
-          <li>Raport per pozitie deschisa</li>
-          <li>Bulk upload 50+ CV-uri</li>
-          <li>Prioritate maxima suport</li>
+          <li><span class="ck">&#10003;</span>10 utilizatori</li>
+          <li><span class="ck">&#10003;</span>Analize nelimitate</li>
+          <li><span class="ck">&#10003;</span>Toate functiile incluse</li>
+          <li><span class="ck">&#10003;</span>Onboarding personalizat 1:1</li>
+          <li><span class="ck">&#10003;</span>Sesiune lunara de optimizare</li>
+          <li><span class="ck">&#10003;</span>Raport per pozitie deschisa</li>
+          <li><span class="ck">&#10003;</span>Bulk upload 50 CV-uri</li>
+          <li><span class="ck">&#10003;</span>Suport telefonic dedicat</li>
         </ul>
         <a href="/login" class="price-btn outline">Solicita acces</a>
       </div>
@@ -302,39 +765,95 @@
   </div>
 </section>
 
-<section class="guarantee" id="guarantee">
+<!-- GUARANTEE -->
+<section class="guarantee reveal" id="guarantee">
   <div class="container">
-    <div class="guarantee-box">
-      <div class="guarantee-icon">&#128737;</div>
+    <div class="guarantee-inner">
+      <div class="guarantee-shield">&#128737;</div>
       <div class="guarantee-text">
-        <h3>Garantia banilor inapoi — 30 de zile</h3>
+        <h3>Garantia banilor inapoi in 30 de zile</h3>
         <p>Daca dupa 30 de zile de utilizare activa nu ai economisit cel putin 10 ore de munca, iti returnam integral banii primei luni. Fara intrebari, fara birocratie.</p>
-        <div class="guarantee-conditions">
-          <span class="condition">&#10003; Minimum 20 analize efectuate</span>
-          <span class="condition">&#10003; Utilizare in minimum 5 zile</span>
-          <span class="condition">&#10003; Cerere in primele 30 zile</span>
+        <div class="guarantee-tags">
+          <span class="gtag">Minim 20 analize efectuate</span>
+          <span class="gtag">Utilizare in minim 5 zile</span>
+          <span class="gtag">Cerere in primele 30 zile</span>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<section class="cta-section">
-  <div class="cta-glow"></div>
+<!-- CTA FINAL -->
+<section class="cta-section reveal">
   <div class="container">
-    <h2>Gata sa recuperezi<br/>50 de ore pe luna?</h2>
-    <p>Demo live de 20 minute pe CV-urile tale reale. Fara card, fara angajament.</p>
-    <div class="cta-actions">
-      <a href="/login" class="btn-primary"><span>&#8594;</span> Solicita demo gratuit</a>
+    <div class="cta-inner">
+      <h2>Gata sa recuperezi<br/>o saptamana pe luna?</h2>
+      <p>Demo live de 20 minute pe CV-urile tale reale. Fara card, fara angajament.</p>
+      <div class="cta-actions">
+        <a href="/login" class="btn-primary" style="font-size:16px;padding:16px 36px">Solicita demo gratuit &rarr;</a>
+      </div>
     </div>
   </div>
 </section>
 
+<!-- FOOTER -->
 <footer>
-  <div class="logo">CV<span>.</span>scanner</div>
-  <p>Powered by Claude AI · Construit pentru agentii de recrutare din Romania</p>
-  <p style="font-size:11px;color:var(--muted2)">2025 CV Scanner AI · Toate drepturile rezervate</p>
+  <div class="footer-logo"><span class="dot"></span>CV.scanner</div>
+  <p>Powered by Anthropic Claude API &bull; Construit pentru agentii de recrutare</p>
+  <p style="font-size:10px;color:var(--muted2)">2025 CV Scanner AI &bull; Toate drepturile rezervate</p>
 </footer>
+
+<script>
+// Counter animation
+function animateCounter(el){
+  const target=parseInt(el.dataset.target);
+  const duration=1200;
+  const start=performance.now();
+  const update=now=>{
+    const p=Math.min((now-start)/duration,1);
+    const ease=1-Math.pow(1-p,3);
+    el.textContent=Math.round(ease*target);
+    if(p<1)requestAnimationFrame(update);
+    else el.textContent=target;
+  };
+  requestAnimationFrame(update);
+}
+
+// Scroll reveal
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      // Animate counters when hero is visible
+      e.target.querySelectorAll('.counter').forEach(c=>animateCounter(c));
+    }
+  });
+},{threshold:0.1});
+
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+// Animate hero counters on load
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    document.querySelectorAll('.hero .counter').forEach(c=>animateCounter(c));
+  },600);
+});
+
+// CV item scan animation
+const cvItems=document.querySelectorAll('.cv-item');
+let scanIdx=0;
+setInterval(()=>{
+  cvItems.forEach(i=>i.style.borderColor='');
+  if(cvItems[scanIdx]){
+    cvItems[scanIdx].style.borderColor='rgba(59,130,246,0.4)';
+    cvItems[scanIdx].style.background='rgba(59,130,246,0.04)';
+    setTimeout(()=>{
+      if(cvItems[scanIdx]){cvItems[scanIdx].style.background='';}
+    },600);
+  }
+  scanIdx=(scanIdx+1)%cvItems.length;
+},1800);
+</script>
 
 </body>
 </html>
