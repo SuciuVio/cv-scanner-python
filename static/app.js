@@ -4,6 +4,7 @@ if(typeof pdfjsLib!=='undefined'){
 
 let cvTextMain='', jmCvText='';
 let cmpFiles=[], matCvFiles=[], matJobs=[];
+let sessionCmpRequests=0;
 
 let lastResult=null, lastMode='analiza', analyzeScorGeneral=null, blindMode=false, lastRejection=null;
 
@@ -102,8 +103,18 @@ function renderCmpList(){
   </div>`).join('');
   const btn=$('btn-cmp');
   btn.disabled=cmpFiles.length<2;
-  btn.textContent=cmpFiles.length<2?'[ adaugă min. 2 cv-uri ]':`[ compară ${cmpFiles.length} cv-uri ]`;
-  $('cmp-count').textContent=cmpFiles.length+' CV-uri încărcate';
+  const n=cmpFiles.length;
+  const reqNeeded=n<2?1:Math.ceil(n/10);
+  btn.textContent=n<2?'[ adaugă min. 2 cv-uri ]':`[ compară ${n} cv-uri — ${reqNeeded} request${reqNeeded>1?'uri':''} ]`;
+  $('cmp-count').textContent=n+' CV-uri încărcate';
+  if(n>=2){
+    show('req-info');
+    $('req-count-badge').textContent=reqNeeded;
+    $('req-count-badge').style.background=reqNeeded<=2?'var(--green)':reqNeeded<=3?'var(--yellow)':'var(--red)';
+    $('req-session-used').textContent=sessionCmpRequests;
+  } else {
+    hide('req-info');
+  }
 }
 
 function removeCmpFile(idx){
@@ -347,10 +358,13 @@ function renderJobMatch(r){
 // ── Compare ────────────────────────────────────────────
 async function doCompare(){
   if(cmpFiles.length<2){showErr('err-cmp','Adaugă minim 2 CV-uri.');return;}
+  const reqUsed=Math.ceil(cmpFiles.length/10);
   $('btn-cmp').disabled=true;$('btn-cmp').textContent='[ se compară... ]';
   hide('err-cmp');show('ld-cmp');hide('res-cmp');
   try{
     const r=await api('/api/compare',{cvs:cmpFiles});
+    sessionCmpRequests+=reqUsed;
+    if($('req-session-used')) $('req-session-used').textContent=sessionCmpRequests;
     renderCompare(r);show('res-cmp');
     if(window.innerWidth>800)$('grid-cmp').style.gridTemplateColumns='360px 1fr';
   }catch(e){showErr('err-cmp',e.message);}
