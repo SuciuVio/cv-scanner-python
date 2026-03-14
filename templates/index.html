@@ -183,7 +183,17 @@
       <h1>CV<span>.</span>scanner</h1>
       <p>analiză · job match · comparare · matching</p>
     </div>
-    <a href="/logout" style="font-size:11px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;transition:all .2s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">⎋ logout</a>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="toggleTheme()">
+        <span style="font-size:11px;font-weight:600;color:var(--muted);font-family:'Inter',sans-serif;letter-spacing:.3px">Dark mode</span>
+        <label style="position:relative;display:inline-block;width:40px;height:22px;cursor:pointer;flex-shrink:0" onclick="event.stopPropagation()">
+          <input type="checkbox" id="theme-toggle" style="opacity:0;width:0;height:0" onchange="toggleTheme()">
+          <span id="theme-track" style="position:absolute;inset:0;background:#cbd5e1;border-radius:22px;transition:.3s"></span>
+          <span id="theme-thumb" style="position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></span>
+        </label>
+      </div>
+      <a href="/logout" style="font-size:11px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;transition:all .2s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">⎋ logout</a>
+    </div>
     <div id="scoreBadge" class="score-badge">
       <div class="sn" id="badgeNum">0</div>
       <div class="ss" id="badgeLbl">-</div>
