@@ -1,4 +1,3 @@
-
 if(typeof pdfjsLib!=='undefined'){
   pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
@@ -24,7 +23,7 @@ function setMode(mode){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   $('panel-'+mode).classList.add('active');
   // Auto-fill Îmbunătățire din Analiză dacă există rezultat
-  
+
 }
 
 function setRTab(btn,tabId){
@@ -464,7 +463,7 @@ function exportCmpPDF(){
   const{jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const W=210,ML=18,TW=W-ML*2;let y=20;
-  const fix=str=>String(str||'').replace(/[ăâ]/g,'a').replace(/î/g,'i').replace(/[șşţț]/g,'s').replace(/[^ -]/g,'?');
+  const fix=str=>String(str||'').replace(/[ăĂ]/g,'a').replace(/[âÂ]/g,'a').replace(/[îÎ]/g,'i').replace(/[șşȘŞ]/g,'s').replace(/[țţȚŢ]/g,'t').replace(/[^\x00-\x7f]/g,'?');
   const chk=n=>{if(y+n>275){doc.addPage();y=20;}};
 
   // Header
@@ -744,7 +743,7 @@ function doExport(){
   const{jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const W=210,ML=18,TW=W-ML*2;let y=20;
-  const fix=str=>String(str||'').replace(/[ăâ]/g,'a').replace(/î/g,'i').replace(/[șşţț]/g,'s').replace(/[^\x00-\x7F]/g,'?');
+  const fix=str=>String(str||'').replace(/[ăĂ]/g,'a').replace(/[âÂ]/g,'a').replace(/[îÎ]/g,'i').replace(/[șşȘŞ]/g,'s').replace(/[țţȚŢ]/g,'t').replace(/[^\x00-\x7f]/g,'?');
   const chk=n=>{if(y+n>275){doc.addPage();y=20;}};
   const secH=t=>{chk(14);doc.setFillColor(240,245,250);doc.rect(ML,y-4,TW,10,'F');
     doc.setFillColor(37,99,235);doc.rect(ML,y-4,3,10,'F');
