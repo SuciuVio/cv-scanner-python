@@ -768,7 +768,7 @@ function doExport(){
   const rezLines=doc.splitTextToSize(fix(r.rezumat||''),TW);doc.text(rezLines,ML,y);y+=rezLines.length*5+6;
   if(r.skills?.length){secH('Skills');y+=2;
     doc.setTextColor(60,60,80);doc.setFontSize(9);doc.setFont('helvetica','normal');
-    const skLines=doc.splitTextToSize(fix((r.skills||[]).join(' · ')),TW);doc.text(skLines,ML,y);y+=skLines.length*5+6;}
+    const skLines=doc.splitTextToSize(fix((r.skills||[]).join(', ')),TW);doc.text(skLines,ML,y);y+=skLines.length*5+6;}
   if(r.experienta?.length){secH('Experienta');y+=2;
     r.experienta.forEach((e,i)=>{chk(18);
       doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(30,30,50);doc.text(fix(e.rol)||'',ML+2,y);y+=5;
